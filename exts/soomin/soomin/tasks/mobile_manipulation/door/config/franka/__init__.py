@@ -11,7 +11,7 @@ from . import agents, joint_pos_env_cfg
 ##
 
 gym.register(
-    id="Soomin-Open-Door-Franka-v0",
+    id="Template-Isaac-Open-Door-Franka-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": joint_pos_env_cfg.FrankaDoorEnvCfg,
@@ -23,7 +23,7 @@ gym.register(
 )
 
 gym.register(
-    id="Soomin-Open-Door-Franka-Play-v0",
+    id="Template-Isaac-Open-Door-Franka-Play-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": joint_pos_env_cfg.FrankaDoorEnvCfg_PLAY,
