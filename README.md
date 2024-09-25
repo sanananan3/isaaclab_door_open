@@ -1,82 +1,86 @@
-# Template for Isaac Lab Projects
+# Isaac Lab Extension Template for Mobile Manipulation: Door Opening Task
 
-[![IsaacSim](https://img.shields.io/badge/IsaacSim-4.0.0-silver.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
-[![Isaac Lab](https://img.shields.io/badge/IsaacLab-1.0.0-silver)](https://isaac-sim.github.io/IsaacLab)
-[![Python](https://img.shields.io/badge/python-3.10-blue.svg)](https://docs.python.org/3/whatsnew/3.10.html)
-[![Linux platform](https://img.shields.io/badge/platform-linux--64-orange.svg)](https://releases.ubuntu.com/20.04/)
-[![Windows platform](https://img.shields.io/badge/platform-windows--64-orange.svg)](https://www.microsoft.com/en-us/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
-[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/license/mit)
+This repository provides a template for setting up a custom Isaac Lab extension for mobile manipulation, focusing on door-opening tasks. It integrates reinforcement learning (RL) with environments designed for robotics, as well as tools for simulation and control.
 
-## Overview
+## Features
 
-This repository serves as a template for building projects or extensions based on Isaac Lab. It allows you to develop in an isolated environment, outside of the core Isaac Lab repository.
+- **Mobile Manipulation Task**: Designed for a door-opening task using a mobile base and manipulator, such as the Summit-based Franka Panda robot.
+- **Custom Isaac Lab Extension**: Built as an extension of Isaac Lab to allow for easy customization and rapid development.
+- **Reinforcement Learning**: Includes scripts and environments for RL using the PPO algorithm from the RSL-RL library.
+- **Simulation Environment**: Fully integrated with Isaac Lab for high-fidelity simulation of robotic tasks.
 
-**Key Features:**
-
-- `Isolation` Work outside the core Isaac Lab repository, ensuring that your development efforts remain self-contained.
-- `Flexibility` This template is set up to allow your code to be run as an extension in Omniverse.
-
-**Keywords:** extension, template, isaaclab
+> 🗒️ **Note:**
+>
+> Due to current issues with the **mobile robot's wheels** and **gravity**, the focus has temporarily shifted to training a fixed robot to perform door grasping.
+> 
+> Once the mobility issues are resolved, the task will be extended to include the mobile robot navigating to and interacting with the door.
 
 
-### Installation
+
+## Prerequisites
+
+Before using this template, ensure the following dependencies are installed:
+
+- [Isaac Lab](https://isaac-sim.github.io/IsaacLab/source/setup/installation/binaries_installation.html#installing-isaac-lab)
+- [Isaac Sim](https://isaac-sim.github.io/IsaacLab/source/setup/installation/binaries_installation.html#installing-isaac-sim)
+- Python 3.8+
+- NVIDIA GPU (for simulation and RL training)
+- **USD files (Mobile Robot, Door with Lever)**: Download from [Google Drive](https://drive.google.com/drive/folders/1JjY9h0QxIDsz6-6uHCe5GD9paAyGRRSA?usp=sharing) and place them in the appropriate directory.
+    - You should modify `usd_path` for [mobile robot](https://github.com/soom1017/isaaclab_door_open/blob/main/exts/soomin/soomin/tasks/mobile_manipulation/door/config/franka/summit_franka.py#L18) and [door](https://github.com/soom1017/isaaclab_door_open/blob/main/exts/soomin/soomin/tasks/mobile_manipulation/door/door_env_cfg.py#L56).
+
+## Installation
+
+1. Make sure Isaac Sim and Isaac Lab is installed and properly configured.
+
+2. Prepare a python interpreter (**choose one option**):
+
+    #### Option 1: Use the existing Python bundled with Isaac Lab
+    As explained in the [documentation](https://isaac-sim.github.io/IsaacLab/source/setup/installation/binaries_installation.html#setting-up-the-conda-environment-optional), the executable `isaaclab.sh` fetches the bundled python. To execute Python scripts, use:
+    ```shell
+    path-to-isaac-lab/isaaclab.sh -p [.py]
+    ```
+    #### Option 2: Set up a new conda environment
+    ```shell
+    path-to-isaac-lab/isaaclab.sh --conda [env_name]    # to create conda env
+
+    conda activate [env_name]
+    isaaclab -i                                         # to install isaac lab extensions in conda env
+    ```
+
+2. Clone this repository and install the extension library:
+
+    ```shell
+    git clone https://github.com/soom1017/isaaclab_door_open.git
+
+    cd exts/soomin
+    python -m pip install -e .      # if option1, path-to-isaac-lab/isaaclab.sh -p -m pip install -e .
+    ```
 
 
-- Throughout the repository, the name `soomin` only serves as an example and we provide a script to rename all the references to it automatically:
+## Usage
 
-```
-# Rename all occurrences of soomin (in files/directories) to your_fancy_extension_name
-python scripts/rename_template.py your_fancy_extension_name
-```
+### Training
 
-- Install Isaac Lab, see the [installation guide](https://isaac-sim.github.io/IsaacLab/source/setup/installation/index.html).
+To train the robot to grasp the door using the PPO algorithm from RSL-RL:
 
-- Using a python interpreter that has Isaac Lab installed, install the library
-
-```
-cd exts/soomin
-python -m pip install -e .
-```
-
-#### Set up IDE (Optional)
-
-To setup the IDE, please follow these instructions:
-
-- Run VSCode Tasks, by pressing `Ctrl+Shift+P`, selecting `Tasks: Run Task` and running the `setup_python_env` in the drop down menu. When running this task, you will be prompted to add the absolute path to your Isaac Lab installation.
-
-If everything executes correctly, it should create a file .python.env in the .vscode directory. The file contains the python paths to all the extensions provided by Isaac Sim and Omniverse. This helps in indexing all the python modules for intelligent suggestions while writing code.
-
-
-#### Setup as Omniverse Extension (Optional)
-
-We provide an example UI extension that will load upon enabling your extension defined in `exts/soomin/soomin/ui_extension_example.py`. For more information on UI extensions, enable and check out the source code of the `omni.isaac.ui_template` extension and refer to the introduction on [Isaac Sim Workflows 1.2.3. GUI](https://docs.omniverse.nvidia.com/isaacsim/latest/introductory_tutorials/tutorial_intro_workflows.html#gui).
-
-To enable your extension, follow these steps:
-
-1. **Add the search path of your repository** to the extension manager:
-    - Navigate to the extension manager using `Window` -> `Extensions`.
-    - Click on the **Hamburger Icon** (☰), then go to `Settings`.
-    - In the `Extension Search Paths`, enter the absolute path to `IsaacLabExtensionTemplate/exts`
-    - If not already present, in the `Extension Search Paths`, enter the path that leads to Isaac Lab's extension directory directory (`IsaacLab/source/extensions`)
-    - Click on the **Hamburger Icon** (☰), then click `Refresh`.
-
-2. **Search and enable your extension**:
-    - Find your extension under the `Third Party` category.
-    - Toggle it to enable your extension.
-
-
-## Code formatting
-
-We have a pre-commit template to automatically format your code.
-To install pre-commit:
-
-```bash
-pip install pre-commit
+```shell
+python scripts/rsl_rl/train.py --task Template-Isaac-Open-Door-Franka-v0 --num_envs 32
 ```
 
-Then you can run pre-commit with:
+### Evaluation
+To evaluate a pre-trained model:
 
-```bash
-pre-commit run --all-files
+```shell
+python scripts/rsl_rl/play.py --task Template-Isaac-Open-Door-Franka-Play-v0 --num_envs 1
 ```
+
+### Experiment Results
+
+- **Tensorboard**: Monitor training progress with Tensorboard.
+
+    ![image](https://github.com/user-attachments/assets/760e445a-c571-42c9-9304-bf87e6e83d8a)
+
+- **Play Video**: Showcase the robot interacting with the environment.
+
+    https://github.com/user-attachments/assets/e07f60dc-1129-4fa1-8c51-b49091441fbc
+
