@@ -123,11 +123,6 @@ def grasp_handle(
     return is_close * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
     
     
-def collision_obj(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
-    asset: Articulation = env.scene[asset_cfg.name]
-    
-    return torch.where((asset.data.body_pos_w[:, asset_cfg.body_ids, 1] < -0.9).any(dim=1), 1.0, 0.0)
-    
 def joint_vel_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize joint velocities on the articulation using L2 squared kernel.
 

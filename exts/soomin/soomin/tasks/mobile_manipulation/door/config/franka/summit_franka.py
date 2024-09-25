@@ -60,14 +60,14 @@ SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
         "fr3_shoulder": ImplicitActuatorCfg(
             joint_names_expr=["fr3_joint[1-4]"],
             effort_limit=87.0,
-            velocity_limit=2.175,
+            velocity_limit=100.0,
             stiffness=80.0,
             damping=4.0,
         ),
         "fr3_forearm": ImplicitActuatorCfg(
             joint_names_expr=["fr3_joint[5-7]"],
             effort_limit=12.0,
-            velocity_limit=2.61,
+            velocity_limit=100.0,
             stiffness=80.0,
             damping=4.0,
         ),
@@ -79,6 +79,7 @@ SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
             damping=1e2,
         ),
     },
+    soft_joint_pos_limit_factor=1.0
 )
 """Configuration of Franka arm with Franka Hand on a Summit base using implicit actuator models.
 
@@ -89,3 +90,10 @@ The following control configuration is used:
 * Hand: position control with damping
 
 """
+
+SUMMIT_FRANKA_PANDA_HIGH_PD_CFG = SUMMIT_FRANKA_PANDA_CFG.copy() # type: ignore
+SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.spawn.rigid_props.disable_gravity = True
+SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.actuators["fr3_shoulder"].stiffness = 400.0
+SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.actuators["fr3_shoulder"].damping = 80.0
+SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.actuators["fr3_forearm"].stiffness = 400.0
+SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.actuators["fr3_forearm"].damping = 80.0

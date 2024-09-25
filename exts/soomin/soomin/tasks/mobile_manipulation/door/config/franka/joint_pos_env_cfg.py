@@ -3,11 +3,12 @@ from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import Offse
 from omni.isaac.lab.utils import configclass
 
 from omni.isaac.lab.markers.config import FRAME_MARKER_CFG
+from omni.isaac.lab_assets import VELODYNE_VLP_16_RAYCASTER_CFG
 
 FRAME_MARKER_SMALL_CFG = FRAME_MARKER_CFG.copy() # type: ignore
 FRAME_MARKER_SMALL_CFG.markers["frame"].scale = (0.10, 0.10, 0.10)
 
-from .summit_franka import SUMMIT_FRANKA_PANDA_CFG
+from .summit_franka import SUMMIT_FRANKA_PANDA_CFG, SUMMIT_FRANKA_PANDA_HIGH_PD_CFG
 from soomin.tasks.mobile_manipulation.door import mdp
 from soomin.tasks.mobile_manipulation.door.door_env_cfg import DoorEnvCfg
 
@@ -17,7 +18,7 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         
-        self.scene.robot = SUMMIT_FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot") # type: ignore
+        self.scene.robot = SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot") # type: ignore
         
         self.scene.ee_frame = FrameTransformerCfg(
             prim_path="{ENV_REGEX_NS}/Robot/summit_xls_lidar_front/fr3_link0",

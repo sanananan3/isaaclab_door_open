@@ -207,7 +207,7 @@ class RewardsCfg:
     
     # 4. Penalize actions for cosmetic reasons
     action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1e-2)
-    # joint_vel = RewTerm(func=joint_vel_l2, weight=-0.0001)
+    joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
     
     
 @configclass
