@@ -177,7 +177,7 @@ class EventCfg:
         func=mdp.reset_joints_by_scale,
         mode="reset",
         params={
-            "position_range": (-0.1, 0.1),
+            "position_range": (-0.4, 0.4),
             "velocity_range": (0.0, 0.0),
         },
     )
@@ -215,6 +215,8 @@ class TerminationsCfg:
     # Time out
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
 
+    # Task Success
+    grasp_door = DoneTerm(func=mdp.sucess_grasp_handle)
 
 @configclass
 class DoorEnvCfg(ManagerBasedRLEnvCfg):

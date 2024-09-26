@@ -11,6 +11,7 @@ from omni.isaac.lab.assets.articulation import ArticulationCfg
 
 ##
 # Configuration
+#   - Joint position's unit: meter (prismatic) or radian (revolute)
 ##
 
 SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
