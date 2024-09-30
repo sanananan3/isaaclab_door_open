@@ -43,7 +43,7 @@ def align_ee_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
 
         reward = 0.5 * (align_z^2 + align_x^2)
 
-    where :math:`align_z` is the dot product of the z direction of the gripper and the -z direction of the handle
+    where :math:`align_z` is the dot product of the z direction of the gripper and the y direction of the handle
     and :math:`align_x` is the dot product of the x direction of the gripper and the -x direction of the handle.
     """
     ee_tcp_quat = env.scene["ee_frame"].data.target_quat_w[..., 0, :]
@@ -53,11 +53,11 @@ def align_ee_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     handle_mat = matrix_from_quat(handle_quat)
     
     # get current x and y direction of the handle
-    handle_x, handle_z = handle_mat[..., 0], handle_mat[..., 2]
+    handle_x, handle_y = handle_mat[..., 0], handle_mat[..., 1]
     # get current x and z direction of the gripper
     ee_tcp_x, ee_tcp_z = ee_tcp_rot_mat[..., 0], ee_tcp_rot_mat[..., 2]
     
-    align_z = torch.bmm(ee_tcp_z.unsqueeze(1), -handle_z.unsqueeze(-1)).squeeze(-1).squeeze(-1)
+    align_z = torch.bmm(ee_tcp_z.unsqueeze(1), handle_y.unsqueeze(-1)).squeeze(-1).squeeze(-1)
     align_x = torch.bmm(ee_tcp_x.unsqueeze(1), -handle_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
     return 0.5 * (torch.sign(align_z) * align_z**2 + torch.sign(align_x) * align_x**2)
     

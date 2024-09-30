@@ -58,17 +58,25 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
         ),
         init_state=ArticulationCfg.InitialStateCfg(
             pos=(0.0, -1.1, 0.0),
+            rot=(-4.3711e-08, -0.0, 0.0, 1.0), # 180 deg rotation about z-axis
             joint_pos={
                 "door_joint": 0.0,
             }
         ),
         actuators={
-            "door_root": ImplicitActuatorCfg(
+            "door_joint": ImplicitActuatorCfg(
                 joint_names_expr=["door_joint"],
                 effort_limit=87.0,
                 velocity_limit=100.0,
                 stiffness=10.0,
                 damping=2.5,
+            ),
+            "lever_joint": ImplicitActuatorCfg(
+                joint_names_expr=["lever_joint"],
+                effort_limit=0.0,
+                velocity_limit=0.0,
+                stiffness=1000000.0,
+                damping=0.0,
             ),
         }
     )
@@ -82,7 +90,7 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
                 prim_path="{ENV_REGEX_NS}/door/door/handle_link",
                 name="door_handle",
                 offset=OffsetCfg(
-                    pos=(0.0, 0.0, 0.0),
+                    pos=(-0.0466, -0.1131, 0.006),
                 ),
             ),
         ],
@@ -136,11 +144,11 @@ class ObservationsCfg:
         
         handle_joint_pos = ObsTerm(
             func=mdp.joint_pos_rel,
-            params={"asset_cfg": SceneEntityCfg("door", joint_names=["handle_joint_02"])},
+            params={"asset_cfg": SceneEntityCfg("door", joint_names=["lever_joint"])},
         )
         handle_joint_vel = ObsTerm(
             func=mdp.joint_vel_rel,
-            params={"asset_cfg": SceneEntityCfg("door", joint_names=["handle_joint_02"])},
+            params={"asset_cfg": SceneEntityCfg("door", joint_names=["lever_joint"])},
         )
         rel_ee_door_distance = ObsTerm(func=mdp.rel_ee_door_distance)
         

@@ -29,7 +29,7 @@ SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
         ),
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.4, 0.0, 0.0),
+        pos=(-0.8, 0.0, 0.0),
         rot=(0.707, 0.0, 0.0, -0.707),
         joint_pos={
             # base
@@ -93,7 +93,6 @@ The following control configuration is used:
 """
 
 SUMMIT_FRANKA_PANDA_HIGH_PD_CFG = SUMMIT_FRANKA_PANDA_CFG.copy() # type: ignore
-SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.spawn.rigid_props.disable_gravity = True
 SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.actuators["fr3_shoulder"].stiffness = 400.0
 SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.actuators["fr3_shoulder"].damping = 80.0
 SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.actuators["fr3_forearm"].stiffness = 400.0

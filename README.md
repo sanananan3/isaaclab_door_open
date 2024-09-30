@@ -78,9 +78,9 @@ python scripts/rsl_rl/play.py --task Template-Isaac-Open-Door-Franka-Play-v0 --n
 
 - **Tensorboard**: Monitor training progress with Tensorboard.
 
-    ![image](https://github.com/user-attachments/assets/760e445a-c571-42c9-9304-bf87e6e83d8a)
+    ![tensorboard](https://github.com/user-attachments/assets/9e6d1392-b654-42d0-95a0-69d64cbe7356)
 
 - **Play Video**: Showcase the robot interacting with the environment.
 
-    https://github.com/user-attachments/assets/a8856366-4e74-428a-aeeb-b023a63f3b0d
+    https://github.com/user-attachments/assets/361a4c56-11c7-4ab6-afc2-3f1248816066
 
