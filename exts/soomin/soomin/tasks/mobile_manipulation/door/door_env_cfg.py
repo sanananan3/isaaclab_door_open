@@ -217,6 +217,13 @@ class RewardsCfg:
     action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1e-2)
     joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
     
+    # 5. Success Bonus
+    open_door_bonus = RewTerm(
+        func=mdp.open_door_bonus,
+        weight=7.5,
+        params={"asset_cfg": SceneEntityCfg("door", joint_names=["door_joint"])}
+    )
+    
     
 @configclass
 class TerminationsCfg:
@@ -224,7 +231,11 @@ class TerminationsCfg:
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
 
     # Task Success
-    grasp_door = DoneTerm(func=mdp.sucess_grasp_handle)
+    # grasp_door = DoneTerm(func=mdp.sucess_grasp_handle)
+    open_door = DoneTerm(
+        func=mdp.success_open_door,
+        params={"asset_cfg": SceneEntityCfg("door", joint_names=["door_joint"])}
+    )
 
 @configclass
 class DoorEnvCfg(ManagerBasedRLEnvCfg):

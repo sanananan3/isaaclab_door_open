@@ -122,6 +122,16 @@ def grasp_handle(
 
     return is_close * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
     
+def open_door_bonus(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    """Bonus for opening the door given by the joint position of the door.
+
+    The bonus is given when the door is open. If the grasp is around the handle, the bonus is doubled.
+    """
+    door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]] # type: ignore
+    is_graspable = align_grasp_around_handle(env).float()
+
+    return (is_graspable + 1.0) * torch.abs(door_pos)
+    
     
 def joint_vel_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize joint velocities on the articulation using L2 squared kernel.
