@@ -1,4 +1,4 @@
-from omni.isaac.lab.sensors import FrameTransformerCfg
+from omni.isaac.lab.sensors import FrameTransformerCfg, ContactSensorCfg
 from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
 from omni.isaac.lab.utils import configclass
 
@@ -47,6 +47,12 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
                     ),
                 ),
             ],
+        )
+        
+        self.scene.contact_forces = ContactSensorCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/summit_xls_lidar_front/.*finger",
+            visualizer_cfg=FRAME_MARKER_SMALL_CFG.replace(prim_path="/Visuals/ContactFrameTransformer"),
+            track_pose=True
         )
         
         self.actions.arm_action= mdp.JointPositionActionCfg(

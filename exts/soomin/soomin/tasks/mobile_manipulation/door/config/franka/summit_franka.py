@@ -17,7 +17,7 @@ from omni.isaac.lab.assets.articulation import ArticulationCfg
 SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
         usd_path=f"/home/kist/Documents/Resources/summit_franka.usd",
-        activate_contact_sensors=False,
+        activate_contact_sensors=True,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             rigid_body_enabled=True,
             kinematic_enabled=False,

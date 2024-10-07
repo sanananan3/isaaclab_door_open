@@ -20,7 +20,7 @@ from omni.isaac.lab.managers import RewardTermCfg as RewTerm
 from omni.isaac.lab.managers import TerminationTermCfg as DoneTerm
 from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.scene import InteractiveSceneCfg
-from omni.isaac.lab.sensors import FrameTransformerCfg
+from omni.isaac.lab.sensors import FrameTransformerCfg, ContactSensorCfg
 from omni.isaac.lab.sensors.frame_transformer import OffsetCfg
 from omni.isaac.lab.utils import configclass
 
@@ -48,6 +48,8 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
     
     robot: ArticulationCfg = MISSING # type: ignore
     ee_frame: FrameTransformerCfg = MISSING # type: ignore
+    
+    contact_forces: ContactSensorCfg = MISSING # type: ignore
     
     # objects
     door = ArticulationCfg(
@@ -214,16 +216,23 @@ class RewardsCfg:
     # collision_obj = RewTerm(func=collision_obj, weight=-10.0)
     
     # 4. Penalize actions for cosmetic reasons
-    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1e-2)
+    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-3e-2)
     joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
     
     # 5. Success Bonus
     open_door_bonus = RewTerm(
         func=mdp.open_door_bonus,
-        weight=7.5,
+        weight=3.5,
         params={"asset_cfg": SceneEntityCfg("door", joint_names=["door_joint"])}
     )
-    
+    open_handle_contact = RewTerm(
+        func=mdp.open_with_handle_contact,
+        weight=4.5,
+        params={
+            "asset_cfg": SceneEntityCfg("door", joint_names=["door_joint"]),
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*finger")
+        }
+    )
     
 @configclass
 class TerminationsCfg:
