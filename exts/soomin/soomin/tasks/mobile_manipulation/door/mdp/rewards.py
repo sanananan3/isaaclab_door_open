@@ -6,6 +6,7 @@ Reference: ~/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_task
 import torch
 import torch.nn.functional as F
 
+from .utils import *
 from omni.isaac.lab.assets import Articulation
 from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.sensors import ContactSensor
@@ -137,50 +138,29 @@ def open_door_bonus(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.
 """
 Contact Sensor.
 """
-def multiply_quat(q: torch.Tensor, r: torch.Tensor) -> torch.Tensor:
-    # q and r are tensors of shape (N, 4) representing quaternions
-    w1, x1, y1, z1 = q.unbind(dim=-1)
-    w2, x2, y2, z2 = r.unbind(dim=-1)
-    
-    w = w1*w2 - x1*x2 - y1*y2 - z1*z2
-    x = w1*x2 + x1*w2 + y1*z2 - z1*y2
-    y = w1*y2 + y1*w2 + z1*x2 - x1*z2
-    z = w1*z2 + z1*w2 + x1*y2 - y1*x2
-    
-    return torch.stack([w, x, y, z], dim=-1)
-
-def inverse_quat(q: torch.Tensor) -> torch.Tensor:
-    w, x, y, z = q.unbind(dim=-1)
-    return torch.stack([w, -x, -y, -z], dim=-1)
 
 def open_with_handle_contact(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, asset_cfg: SceneEntityCfg) -> torch.Tensor:
     """Bonus for opening the door given by the joint position of the door.
 
     The bonus is given when the door is open. If the gripper is contact with the handle, the bonus is doubled.
     """
-    
-    # ee_tcp_quat = env.scene["ee_frame"].data.target_quat_w[..., 0, :] # shape = (N, 4)
-    # w, x, y, z = ee_tcp_quat.unbind(dim=-1)
-    # ee_tcp_quat_inv = torch.stack([w, -x, -y, -z], dim=-1)
-    
-    door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]] # type: ignore
+    door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]]
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
-    contact_forces = contact_sensor.data.net_forces_w[:, sensor_cfg.body_ids] # (N, 2, 3)
+    contact_forces = contact_sensor.data.net_forces_w[:, sensor_cfg.body_ids] # shape = (N, 2, 3)
     
     contact_quat_r = contact_sensor.data.quat_w[:, 0] # (N, 4)
     contact_quat_l = contact_sensor.data.quat_w[:, 1] # (N, 4)
     
-    rfinger_contact_forces = F.pad(contact_forces[:, 0], (1, 0)) # shape = (N, 4)
-    lfinger_contact_forces = F.pad(contact_forces[:, 1], (1, 0)) # shape = (N, 4)
+    rfinger_contact_forces = F.pad(contact_forces[:, 0], (1, 0)) # (N, 4)
+    lfinger_contact_forces = F.pad(contact_forces[:, 1], (1, 0)) # (N, 4)
     
     # rotation: q^-1 * contact forces * q
     rfinger_contact_forces = multiply_quat(multiply_quat(inverse_quat(contact_quat_r), rfinger_contact_forces), contact_quat_r)
     lfinger_contact_forces = multiply_quat(multiply_quat(inverse_quat(contact_quat_l), lfinger_contact_forces), contact_quat_l)
     
-    
-    print(f"right_contact_forces: {rfinger_contact_forces[:, 1:]}")
-    print(f"left_contact_forces: {-1 * lfinger_contact_forces[:, 1:]}")
-    return align_grasp_around_handle(env)
+    # add +y direction force for left gripper and -y direction force for right gripper
+    grasp_force = lfinger_contact_forces[:, 2] - rfinger_contact_forces[:, 2]
+    return (grasp_force * 0.1 + 0.1) * torch.abs(door_pos)
     
     
 def joint_vel_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
