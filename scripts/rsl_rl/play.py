@@ -39,14 +39,15 @@ import gymnasium as gym
 import os
 import torch
 
-from rsl_rl.runners import OnPolicyRunner
 
 # Import extensions to set up environment tasks
 import soomin.tasks  # noqa: F401
+from soomin.utils.wrappers.rsl_rl.runners import OnPolicyRunner
+from soomin.utils.wrappers.rsl_rl.vecenv_wrapper import RslRlVecEnvWrapper
 
 from omni.isaac.lab.utils.dict import print_dict
 from omni.isaac.lab_tasks.utils import get_checkpoint_path, parse_env_cfg
-from omni.isaac.lab_tasks.utils.wrappers.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper, export_policy_as_onnx
+from omni.isaac.lab_tasks.utils.wrappers.rsl_rl import RslRlOnPolicyRunnerCfg, export_policy_as_onnx
 
 
 def main():
@@ -97,13 +98,20 @@ def main():
     obs, _ = env.get_observations()
     timestep = 0
     # simulate environment
+    done = False
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
             # agent stepping
             actions = policy(obs)
             # env stepping
-            obs, _, _, _ = env.step(actions)
+            if done:
+                actions = torch.zeros_like(actions).to(device=agent_cfg.device)
+            obs, _, term, trunc, _ = env.step(actions)
+            if term:
+                done = True
+            if trunc:
+                done = False
         if args_cli.video:
             timestep += 1
             # Exit the play loop after recording one video
