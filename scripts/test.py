@@ -31,8 +31,14 @@ def main():
     count = 0
     while simulation_app.is_running():
         with torch.inference_mode():
-            # reset
-            if count % 200 == 0:
+            if count == 0:
+                start_pos = env.scene["robot"].data.root_state_w[0, 1]
+            elif count % 120 == 0:
+                reset_pos = env.scene["robot"].data.root_state_w[0, 1]
+                # validate holonomic controller's result: base velocity in y axis should be 2 (error range = 0.2)
+                assert torch.abs(reset_pos - start_pos - 2) < 0.2
+                start_pos = reset_pos
+                # reset
                 count = 0
                 env.reset()
                 
