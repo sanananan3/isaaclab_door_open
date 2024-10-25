@@ -100,7 +100,6 @@ class FloatingHolonomicAction(ActionTerm):
     def apply_actions(self):
         # obtain current heading
         quat_w = self._asset.data.body_quat_w[:, self._body_idx[0]]
-        print(quat_w.shape)
         yaw_w = euler_xyz_from_quat(quat_w)[2]
         # compute joint velocities targets
         self._joint_vel_command[:, 0] = torch.cos(yaw_w) * self.processed_actions[:, 0] - torch.sin(yaw_w) * self.processed_actions[:, 1]  # x
