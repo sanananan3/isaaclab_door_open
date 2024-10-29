@@ -8,7 +8,8 @@ from omni.isaac.lab_assets import VELODYNE_VLP_16_RAYCASTER_CFG
 FRAME_MARKER_SMALL_CFG = FRAME_MARKER_CFG.copy() # type: ignore
 FRAME_MARKER_SMALL_CFG.markers["frame"].scale = (0.10, 0.10, 0.10)
 
-from .summit_franka import SUMMIT_FRANKA_PANDA_CFG, SUMMIT_FRANKA_PANDA_HIGH_PD_CFG
+from .summit_franka import SUMMIT_FRANKA_PANDA_HIGH_PD_CFG as SUMMIT_FRANKA_CFG
+from .floating_franka import SUMMIT_FRANKA_PANDA_HIGH_PD_CFG as FLOATING_FRANKA_CFG
 from soomin.tasks.mobile_manipulation.door import mdp
 from soomin.tasks.mobile_manipulation.door.door_env_cfg import DoorEnvCfg
 
@@ -18,29 +19,29 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         
-        self.scene.robot = SUMMIT_FRANKA_PANDA_HIGH_PD_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot") # type: ignore
+        self.scene.robot = FLOATING_FRANKA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot") # type: ignore
         
         self.scene.ee_frame = FrameTransformerCfg(
-            prim_path="{ENV_REGEX_NS}/Robot/summit_xls_lidar_front/fr3_link0",
+            prim_path="{ENV_REGEX_NS}/Robot/fr3_link0",
             debug_vis=False,
             visualizer_cfg=FRAME_MARKER_SMALL_CFG.replace(prim_path="/Visuals/EndEffectorFrameTransformer"),
             target_frames=[
                 FrameTransformerCfg.FrameCfg(
-                    prim_path="{ENV_REGEX_NS}/Robot/summit_xls_lidar_front/fr3_hand",
+                    prim_path="{ENV_REGEX_NS}/Robot/fr3_hand",
                     name="ee_tcp",
                     offset=OffsetCfg(
                         pos=(0.0, 0.0, 0.1034),
                     ),
                 ),
                 FrameTransformerCfg.FrameCfg(
-                    prim_path="{ENV_REGEX_NS}/Robot/summit_xls_lidar_front/fr3_leftfinger",
+                    prim_path="{ENV_REGEX_NS}/Robot/fr3_leftfinger",
                     name="tool_leftfinger",
                     offset=OffsetCfg(
                         pos=(0.0, 0.0, 0.046),
                     ),
                 ),
                 FrameTransformerCfg.FrameCfg(
-                    prim_path="{ENV_REGEX_NS}/Robot/summit_xls_lidar_front/fr3_rightfinger",
+                    prim_path="{ENV_REGEX_NS}/Robot/fr3_rightfinger",
                     name="tool_rightfinger",
                     offset=OffsetCfg(
                         pos=(0.0, 0.0, 0.046),
@@ -57,6 +58,13 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
             joint_names=["fr3_finger_joint.*"],
             open_command_expr={"fr3_finger_joint.*": 0.04},
             close_command_expr={"fr3_finger_joint.*": 0.0},
+        )
+        self.actions.mobile_action = mdp.FloatingHolonomicActionCfg(
+            asset_name="robot", 
+            body_name="robot_base_link",
+            x_joint_name="base_joint_x",
+            y_joint_name="base_joint_y",
+            yaw_joint_name="base_joint_z"
         )
         
 @configclass

@@ -57,8 +57,8 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
             activate_contact_sensors=False,
         ),
         init_state=ArticulationCfg.InitialStateCfg(
-            pos=(0.0, -1.1, 0.0),
-            rot=(-4.3711e-08, -0.0, 0.0, 1.0), # 180 deg rotation about z-axis
+            pos=(0.0, 0.0, 0.0),
+            rot=(0.0, 0.0, 0.0, 1.0), # 180 deg rotation about z-axis
             joint_pos={
                 "door_joint": 0.0,
             }
@@ -75,8 +75,9 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
                 joint_names_expr=["lever_joint"],
                 effort_limit=0.0,
                 velocity_limit=0.0,
-                stiffness=1000000.0,
-                damping=0.0,
+                stiffness=500.0,
+                damping=100.0,
+                friction=0.3,
             ),
         }
     )
@@ -165,19 +166,6 @@ class ObservationsCfg:
 class EventCfg:
     """Configuration for events."""
     
-    # on startup
-    robot_physics_material = EventTerm(
-        func=mdp.randomize_rigid_body_material,
-        mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-            "static_friction_range": (0.8, 1.25),
-            "dynamic_friction_range": (0.8, 1.25),
-            "restitution_range": (0.0, 0.0),
-            "num_buckets": 16,
-        },
-    )
-    
     # on reset
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
     
@@ -257,12 +245,12 @@ class DoorEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 1
-        self.episode_length_s = 8.0
+        self.episode_length_s = 1.0
         self.viewer.origin_type = "env"
         self.viewer.eye = (3.0, 0.0, 2.5)
         self.viewer.lookat = (-0.5, -1.0, 0.5)
         # simulation settings
-        self.sim.dt = 1 / 60  # 60Hz
+        self.sim.dt = 1 / 1000  # 1000Hz
         self.sim.render_interval = self.decimation
         self.sim.physx.bounce_threshold_velocity = 0.2
         self.sim.physx.bounce_threshold_velocity = 0.01
