@@ -1,3 +1,5 @@
+# type: ignore
+
 from omni.isaac.lab.utils import configclass
 
 from .o3dyn import O3DYN_CFG
@@ -10,7 +12,7 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         
-        self.scene.robot = O3DYN_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot") # type: ignore
+        self.scene.robot = O3DYN_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
         
         self.actions.arm_action= mdp.JointPositionActionCfg(
             asset_name="robot", joint_names=["fr3_joint.*"], scale=1.

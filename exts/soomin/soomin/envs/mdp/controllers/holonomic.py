@@ -176,7 +176,7 @@ class HolonomicController:
             try:
                 res = self.prob.solve()
             except Exception as e:
-                carb.log_error("error:", e) # type: ignore
+                carb.log_error("error:", e)
 
             if res is not None:
                 values = torch.tensor(res.x.reshape([res.x.shape[0]])) * self.cfg.max_linear_speed

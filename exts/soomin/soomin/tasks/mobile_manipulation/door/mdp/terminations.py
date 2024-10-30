@@ -1,3 +1,5 @@
+# type: ignore
+
 """Common functions that can be used to activate certain terminations for door opening task."""
 
 import torch
@@ -34,7 +36,7 @@ def success_open_door(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, thresho
     
     This function returns True if the door joint position is over the threshold. Otherwise, it returns False.
     """
-    door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]] # type: ignore
+    door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]]
     is_graspable = sucess_grasp_handle(env)
     
     return torch.abs(is_graspable * door_pos) >= threshold
