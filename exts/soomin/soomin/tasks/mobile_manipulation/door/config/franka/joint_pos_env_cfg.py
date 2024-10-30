@@ -1,11 +1,13 @@
-from omni.isaac.lab.sensors import FrameTransformerCfg
+# type: ignore
+
+from omni.isaac.lab.sensors import FrameTransformerCfg, ContactSensorCfg
 from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
 from omni.isaac.lab.utils import configclass
 
 from omni.isaac.lab.markers.config import FRAME_MARKER_CFG
 from omni.isaac.lab_assets import VELODYNE_VLP_16_RAYCASTER_CFG
 
-FRAME_MARKER_SMALL_CFG = FRAME_MARKER_CFG.copy() # type: ignore
+FRAME_MARKER_SMALL_CFG = FRAME_MARKER_CFG.copy()
 FRAME_MARKER_SMALL_CFG.markers["frame"].scale = (0.10, 0.10, 0.10)
 
 from .summit_franka import SUMMIT_FRANKA_PANDA_HIGH_PD_CFG as SUMMIT_FRANKA_CFG
@@ -19,7 +21,7 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         
-        self.scene.robot = FLOATING_FRANKA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot") # type: ignore
+        self.scene.robot = FLOATING_FRANKA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
         
         self.scene.ee_frame = FrameTransformerCfg(
             prim_path="{ENV_REGEX_NS}/Robot/fr3_link0",
@@ -48,6 +50,12 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
                     ),
                 ),
             ],
+        )
+        
+        self.scene.contact_forces = ContactSensorCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/.*finger",
+            visualizer_cfg=FRAME_MARKER_SMALL_CFG.replace(prim_path="/Visuals/ContactFrameTransformer"),
+            track_pose=True
         )
         
         self.actions.arm_action= mdp.JointPositionActionCfg(

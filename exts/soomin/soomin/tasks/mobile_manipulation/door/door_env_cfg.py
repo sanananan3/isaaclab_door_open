@@ -1,3 +1,4 @@
+# type: ignore
 """Configuration for RL environment of mobile manipulation.
 
 Primary Work: Summit-based Franka emika robot's manipulation for 'door opening' task.
@@ -18,9 +19,10 @@ from omni.isaac.lab.managers import EventTermCfg as EventTerm
 from omni.isaac.lab.managers import ActionTermCfg as ActionTerm
 from omni.isaac.lab.managers import RewardTermCfg as RewTerm
 from omni.isaac.lab.managers import TerminationTermCfg as DoneTerm
+from omni.isaac.lab.managers import CurriculumTermCfg as CurrTerm
 from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.scene import InteractiveSceneCfg
-from omni.isaac.lab.sensors import FrameTransformerCfg
+from omni.isaac.lab.sensors import FrameTransformerCfg, ContactSensorCfg
 from omni.isaac.lab.sensors.frame_transformer import OffsetCfg
 from omni.isaac.lab.utils import configclass
 
@@ -31,7 +33,7 @@ from . import mdp
 ##
 from omni.isaac.lab.markers.config import FRAME_MARKER_CFG
 
-FRAME_MARKER_SMALL_CFG = FRAME_MARKER_CFG.copy() # type: ignore
+FRAME_MARKER_SMALL_CFG = FRAME_MARKER_CFG.copy() 
 FRAME_MARKER_SMALL_CFG.markers["frame"].scale = (0.10, 0.10, 0.10)
 
 
@@ -46,9 +48,10 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
     
     replicate_physics = False
     
-    robot: ArticulationCfg = MISSING # type: ignore
-    ee_frame: FrameTransformerCfg = MISSING # type: ignore
-    
+    robot: ArticulationCfg = MISSING
+    ee_frame: FrameTransformerCfg = MISSING
+    contact_forces: ContactSensorCfg = MISSING
+        
     # objects
     door = ArticulationCfg(
         prim_path="{ENV_REGEX_NS}/door",
@@ -57,7 +60,7 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
             activate_contact_sensors=False,
         ),
         init_state=ArticulationCfg.InitialStateCfg(
-            pos=(0.0, 0.0, 0.0),
+            pos=(0.4, -0.8, 0.0),
             rot=(0.0, 0.0, 0.0, 1.0), # 180 deg rotation about z-axis
             joint_pos={
                 "door_joint": 0.0,
@@ -88,10 +91,10 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
         visualizer_cfg=FRAME_MARKER_SMALL_CFG.replace(prim_path="/Visuals/DoorFrameTransformer"),
         target_frames=[
             FrameTransformerCfg.FrameCfg(
-                prim_path="{ENV_REGEX_NS}/door/door/handle_link",
+                prim_path="{ENV_REGEX_NS}/door/door/lever_link",
                 name="door_handle",
                 offset=OffsetCfg(
-                    pos=(-0.0466, -0.1131, 0.006),
+                    pos=(0.09, 0.0, 0.0),
                 ),
             ),
         ],
@@ -126,8 +129,8 @@ class CommandsCfg:
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
-    arm_action: mdp.JointPositionActionCfg = MISSING # type: ignore
-    gripper_action: mdp.BinaryJointPositionActionCfg = MISSING # type: ignore
+    arm_action: mdp.JointPositionActionCfg = MISSING
+    gripper_action: mdp.BinaryJointPositionActionCfg = MISSING
 
     mobile_action: ActionTerm | None = None
 
@@ -140,6 +143,7 @@ class ObservationsCfg:
         """Observations for policy group."""
         
         # observation terms (order preserved)
+        root_pos = ObsTerm(func=mdp.root_pos_w)
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
         
@@ -169,12 +173,12 @@ class EventCfg:
     # on reset
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
     
-    reset_robot_joints = EventTerm(
-        func=mdp.reset_joints_by_scale,
+    reset_root_pos = EventTerm(
+        func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "position_range": (-0.4, 0.4),
-            "velocity_range": (0.0, 0.0),
+            "pose_range": {"x": (-0.2, 0.2), "y": (-0.2, 0.2), "yaw": (-0.5, 0.5)},
+            "velocity_range": {"x": (0.0, 0.0), "y": (0.0, 0.0), "yaw": (0.0, 0.0)}
         },
     )
 
@@ -198,19 +202,29 @@ class RewardsCfg:
         },
     )
     
-    # 3. Penalize actions for safer robot execution
-    # collision_obj = RewTerm(func=collision_obj, weight=-10.0)
-    
-    # 4. Penalize actions for cosmetic reasons
+    # 3. Penalize actions for cosmetic reasons
     action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1e-2)
     joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
     
-    # 5. Success Bonus
+    # 4. Success Bonus
     open_door_bonus = RewTerm(
         func=mdp.open_door_bonus,
-        weight=7.5,
+        weight=3.5,
         params={"asset_cfg": SceneEntityCfg("door", joint_names=["door_joint"])}
     )
+    open_handle_contact = RewTerm(
+        func=mdp.open_with_handle_contact,
+        weight=4.5,
+        params={
+            "asset_cfg": SceneEntityCfg("door", joint_names=["door_joint"]),
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*finger")
+        }
+    )
+    
+@configclass
+class CurriCulumCfg:
+    # door_stiffness = CurrTerm(func=mdp.door_joint_stiffness)
+    pass
     
     
 @configclass
@@ -239,13 +253,14 @@ class DoorEnvCfg(ManagerBasedRLEnvCfg):
     commands: CommandsCfg = CommandsCfg()
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
+    curriculum: CurriCulumCfg = CurriCulumCfg()
     
     
     def __post_init__(self):
         """Post initialization."""
         # general settings
-        self.decimation = 1
-        self.episode_length_s = 1.0
+        self.decimation = 2
+        self.episode_length_s = 1.5
         self.viewer.origin_type = "env"
         self.viewer.eye = (3.0, 0.0, 2.5)
         self.viewer.lookat = (-0.5, -1.0, 0.5)

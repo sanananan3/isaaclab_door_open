@@ -17,7 +17,7 @@ from omni.isaac.lab.assets.articulation import ArticulationCfg
 SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
         usd_path=f"/home/kist/Documents/Resources/floating_franka.usd",
-        activate_contact_sensors=False,
+        activate_contact_sensors=True,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             rigid_body_enabled=True,
             kinematic_enabled=False,
@@ -29,7 +29,7 @@ SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
         ),
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(-0.4, 1.8, 0.039),
+        pos=(0.0, 0.0, 0.039),
         rot=(-0.7071, 0.0, 0.0, 0.7071),
         joint_pos={
             # base
@@ -38,12 +38,12 @@ SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
             "base_joint_z": 0.0,
             # franka arm
             "fr3_joint1": 0.0,
-            "fr3_joint2": -0.569,
+            "fr3_joint2": -0.7853981,
             "fr3_joint3": 0.0,
-            "fr3_joint4": -2.810,
+            "fr3_joint4": -2.3561944,
             "fr3_joint5": 0.0,
-            "fr3_joint6": 3.037,
-            "fr3_joint7": 0.741,
+            "fr3_joint6": 1.5707963,
+            "fr3_joint7": 0.7853981,
             # tool
             "fr3_finger_joint.*": 0.04,
         },

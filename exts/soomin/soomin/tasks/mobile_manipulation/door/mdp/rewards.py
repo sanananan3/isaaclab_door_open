@@ -1,28 +1,22 @@
+# type: ignore
+
 """MDP rewards.
 
 Reference: ~/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/manager_based/manipulation/cabinet/mdp/rewards.py
 """
 
 import torch
+import torch.nn.functional as F
 
+from .utils import *
 from omni.isaac.lab.assets import Articulation
 from omni.isaac.lab.managers import SceneEntityCfg
+from omni.isaac.lab.sensors import ContactSensor
 from omni.isaac.lab.utils.math import matrix_from_quat
 from omni.isaac.lab.envs import ManagerBasedRLEnv
 
 def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor:
-    r"""Reward the robot for reaching the door handle using inverse-square law.
-
-    It uses a piecewise function to reward the robot for reaching the handle.
-
-    .. math::
-
-        reward = \begin{cases}
-            2 * (1 / (1 + distance^2))^2 & \text{if } distance \leq threshold \\
-            (1 / (1 + distance^2))^2 & \text{otherwise}
-        \end{cases}
-
-    """
+    """Reward the robot for reaching the door handle using inverse-square law."""
     ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
     handle_pos = env.scene["handle_frame"].data.target_pos_w[..., 0, :]
 
@@ -36,15 +30,8 @@ def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor
 
 def align_ee_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     """Reward for aligning the end-effector with the handle.
-
-    The reward is based on the alignment of the gripper with the handle. It is computed as follows:
-
-    .. math::
-
-        reward = 0.5 * (align_z^2 + align_x^2)
-
-    where :math:`align_z` is the dot product of the z direction of the gripper and the y direction of the handle
-    and :math:`align_x` is the dot product of the x direction of the gripper and the -x direction of the handle.
+        where `align_z` is the dot product of the z direction of the gripper and the -z direction of the handle
+        and `align_x` is the dot product of the x direction of the gripper and the x direction of the handle.
     """
     ee_tcp_quat = env.scene["ee_frame"].data.target_quat_w[..., 0, :]
     handle_quat = env.scene["handle_frame"].data.target_quat_w[..., 0, :]
@@ -53,12 +40,12 @@ def align_ee_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     handle_mat = matrix_from_quat(handle_quat)
     
     # get current x and y direction of the handle
-    handle_x, handle_y = handle_mat[..., 0], handle_mat[..., 1]
+    handle_x, handle_z = handle_mat[..., 0], handle_mat[..., 2]
     # get current x and z direction of the gripper
     ee_tcp_x, ee_tcp_z = ee_tcp_rot_mat[..., 0], ee_tcp_rot_mat[..., 2]
     
-    align_z = torch.bmm(ee_tcp_z.unsqueeze(1), handle_y.unsqueeze(-1)).squeeze(-1).squeeze(-1)
-    align_x = torch.bmm(ee_tcp_x.unsqueeze(1), -handle_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
+    align_z = torch.bmm(ee_tcp_z.unsqueeze(1), -handle_z.unsqueeze(-1)).squeeze(-1).squeeze(-1)
+    align_x = torch.bmm(ee_tcp_x.unsqueeze(1), handle_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
     return 0.5 * (torch.sign(align_z) * align_z**2 + torch.sign(align_x) * align_x**2)
     
     
@@ -127,7 +114,7 @@ def open_door_bonus(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.
 
     The bonus is given when the door is open. If the grasp is around the handle, the bonus is doubled.
     """
-    door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]] # type: ignore
+    door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]]
     is_graspable = align_grasp_around_handle(env).float()
 
     return (is_graspable + 1.0) * torch.abs(door_pos)
@@ -146,3 +133,32 @@ def action_rate_l2(env: ManagerBasedRLEnv) -> torch.Tensor:
     """Penalize the rate of change of the actions using L2 squared kernel."""
     return torch.sum(torch.square(env.action_manager.action - env.action_manager.prev_action), dim=1)
 
+"""
+Contact Sensor.
+"""
+
+def open_with_handle_contact(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]]
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    contact_forces = contact_sensor.data.net_forces_w[:, sensor_cfg.body_ids] # shape = (N, 2, 3)
+
+    contact_quat_r = contact_sensor.data.quat_w[:, 0] # (N, 4)
+    contact_quat_l = contact_sensor.data.quat_w[:, 1] # (N, 4)
+
+    rfinger_contact_forces = F.pad(contact_forces[:, 0], (1, 0)) # (N, 4)
+    lfinger_contact_forces = F.pad(contact_forces[:, 1], (1, 0)) # (N, 4)
+
+    # rotation: q^-1 * contact forces * q
+    rfinger_contact_forces = multiply_quat(multiply_quat(inverse_quat(contact_quat_r), rfinger_contact_forces), contact_quat_r)
+    lfinger_contact_forces = multiply_quat(multiply_quat(inverse_quat(contact_quat_l), lfinger_contact_forces), contact_quat_l)
+
+    # add +y direction force for left gripper and -y direction force for right gripper
+    grasp_force = lfinger_contact_forces[:, 2] - rfinger_contact_forces[:, 2]
+    return (grasp_force * 0.1 + 0.1) * torch.abs(door_pos)
+
+def contact_penalty(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    contact_forces = contact_sensor.data.net_forces_w[:, sensor_cfg.body_ids] # shape = (N, M, 3)
+
+    non_zero_forces = contact_forces.abs().sum(dim=2).sum(dim=1) > 0  # Shape (N,)
+    return non_zero_forces
