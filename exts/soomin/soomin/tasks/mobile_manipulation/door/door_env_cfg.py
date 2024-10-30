@@ -10,7 +10,6 @@ from dataclasses import MISSING
 
 import omni.isaac.lab.sim as sim_utils
 import omni.isaac.lab_tasks.manager_based.manipulation.reach.mdp as mdp
-from omni.isaac.lab.actuators.actuator_cfg import ImplicitActuatorCfg
 from omni.isaac.lab.assets import ArticulationCfg, AssetBaseCfg
 from omni.isaac.lab.envs import ManagerBasedRLEnvCfg
 from omni.isaac.lab.managers import ObservationGroupCfg as ObsGroup
@@ -64,25 +63,9 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
             rot=(0.0, 0.0, 0.0, 1.0), # 180 deg rotation about z-axis
             joint_pos={
                 "door_joint": 0.0,
+                "lever_joint": 0.0,
             }
         ),
-        actuators={
-            "door_joint": ImplicitActuatorCfg(
-                joint_names_expr=["door_joint"],
-                effort_limit=87.0,
-                velocity_limit=100.0,
-                stiffness=10.0,
-                damping=2.5,
-            ),
-            "lever_joint": ImplicitActuatorCfg(
-                joint_names_expr=["lever_joint"],
-                effort_limit=0.0,
-                velocity_limit=0.0,
-                stiffness=500.0,
-                damping=100.0,
-                friction=0.3,
-            ),
-        }
     )
     
     handle_frame = FrameTransformerCfg(
@@ -94,7 +77,7 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
                 prim_path="{ENV_REGEX_NS}/door/door/lever_link",
                 name="door_handle",
                 offset=OffsetCfg(
-                    pos=(0.09, 0.0, 0.0),
+                    pos=(0.09, 0.0, 0.04),
                 ),
             ),
         ],
@@ -180,6 +163,14 @@ class EventCfg:
             "pose_range": {"x": (-0.2, 0.2), "y": (-0.2, 0.2), "yaw": (-0.5, 0.5)},
             "velocity_range": {"x": (0.0, 0.0), "y": (0.0, 0.0), "yaw": (0.0, 0.0)}
         },
+    )
+    
+    door_external_spring_force = EventTerm(
+        func=mdp.apply_door_external_torque, 
+        mode="reset",
+        params={
+            "asset_cfg": SceneEntityCfg("door", body_names=["door_link", "lever_link"], preserve_order=True)
+        }
     )
 
     
