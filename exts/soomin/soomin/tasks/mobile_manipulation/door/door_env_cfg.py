@@ -77,7 +77,7 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
                 prim_path="{ENV_REGEX_NS}/door/door/lever_link",
                 name="door_handle",
                 offset=OffsetCfg(
-                    pos=(0.09, 0.0, 0.04),
+                    pos=(0.02, 0.0, 0.02),
                 ),
             ),
         ],
@@ -178,14 +178,14 @@ class EventCfg:
 class RewardsCfg:
     # 1. Approach the handle
     approach_ee_handle = RewTerm(func=mdp.approach_ee_handle, weight=2.0, params={"threshold": 0.2})
-    align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=2.0)
+    align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=4.0)
     
     # 2. Grasp the handle
     approach_gripper_handle = RewTerm(func=mdp.approach_gripper_handle, weight=5.0)
-    align_grasp_around_handle = RewTerm(func=mdp.align_grasp_around_handle, weight=0.125)
+    align_grasp_around_handle = RewTerm(func=mdp.align_grasp_around_handle, weight=3.0)
     grasp_handle = RewTerm(
         func=mdp.grasp_handle,
-        weight=0.5,
+        weight=3.0,
         params={
             "threshold": 0.03,
             "open_joint_pos": 0.04,
@@ -193,11 +193,29 @@ class RewardsCfg:
         },
     )
     
-    # 3. Penalize actions for cosmetic reasons
-    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1e-2)
-    joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
+    # 3. Mobile action
+    keep_safe_area = RewTerm(func=mdp.safe_distance_from_door, weight=50.0)
     
-    # 4. Success Bonus
+    # 4. Penalize actions for cosmetic reasons
+    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.0001)
+    joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
+    base_joint_vel = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-0.01,
+        params={
+            "asset_cfg": SceneEntityCfg("robot", joint_names=["base_joint.*"]),
+        }
+    )
+    
+    # 5. Success Bonus
+    rotate_handle_bonus = RewTerm(
+        func=mdp.rotate_lever_with_handle_contact,
+        weight=4.5,
+        params={
+            "asset_cfg": SceneEntityCfg("door", joint_names=["lever_joint"]),
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*finger")
+        }
+    )
     open_door_bonus = RewTerm(
         func=mdp.open_door_bonus,
         weight=3.5,

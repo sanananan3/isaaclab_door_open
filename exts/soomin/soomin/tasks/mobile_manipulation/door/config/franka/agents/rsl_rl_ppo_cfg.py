@@ -15,7 +15,7 @@ from omni.isaac.lab_tasks.utils.wrappers.rsl_rl import (
 @configclass
 class DoorPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 96
-    max_iterations = 400
+    max_iterations = 1000
     save_interval = 50
     experiment_name = "franka_open_door"
     empirical_normalization = False

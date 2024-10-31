@@ -85,7 +85,7 @@ def align_grasp_around_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     rfinger_pos = ee_fingertips_w[..., 1, :]
     
     # Check if hand is in a graspable pose
-    is_graspable = (rfinger_pos[:, 2] < handle_pos[:, 2]) | (lfinger_pos[:, 2] > handle_pos[:, 2])
+    is_graspable = (rfinger_pos[:, 2] < handle_pos[:, 2]) & (lfinger_pos[:, 2] > handle_pos[:, 2])
     
     return is_graspable
 
@@ -119,6 +119,19 @@ def open_door_bonus(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.
 
     return (is_graspable + 1.0) * torch.abs(door_pos)
     
+def safe_distance_from_door(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"), threshold: float = 0.8) -> torch.Tensor:
+    """Penalize the agent if it enters a restricted area close to the door handle.
+    """
+    robot_xy = env.scene[asset_cfg.name].data.root_pos_w[..., :2]
+    handle_xy = env.scene["handle_frame"].data.target_pos_w[..., 0, :2]
+    distance = torch.norm(robot_xy - handle_xy, dim=-1, p=2)
+    return torch.clamp(threshold - distance, max=0.0)
+    
+    
+
+"""
+Penalty terms.
+"""
     
 def joint_vel_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize joint velocities on the articulation using L2 squared kernel.
@@ -137,8 +150,7 @@ def action_rate_l2(env: ManagerBasedRLEnv) -> torch.Tensor:
 Contact Sensor.
 """
 
-def open_with_handle_contact(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, asset_cfg: SceneEntityCfg) -> torch.Tensor:
-    door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]]
+def _grasp_force(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
     contact_forces = contact_sensor.data.net_forces_w[:, sensor_cfg.body_ids] # shape = (N, 2, 3)
 
@@ -152,9 +164,29 @@ def open_with_handle_contact(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg,
     rfinger_contact_forces = multiply_quat(multiply_quat(inverse_quat(contact_quat_r), rfinger_contact_forces), contact_quat_r)
     lfinger_contact_forces = multiply_quat(multiply_quat(inverse_quat(contact_quat_l), lfinger_contact_forces), contact_quat_l)
 
+    # `grasp`: grippers are on the opposite side & both have contact 
+    is_graspable = align_grasp_around_handle(env)
+    both_contacted = (lfinger_contact_forces[:, 2] > 0) & (rfinger_contact_forces[:, 2] < 0)
+    
+    # too strong is not allowed either
+    lfinger_contact_forces[:, 2] = torch.clamp(lfinger_contact_forces[:, 2], max=20.0)
+    lfinger_contact_forces[:, 2] = torch.clamp(lfinger_contact_forces[:, 2], min=-20.0)
     # add +y direction force for left gripper and -y direction force for right gripper
-    grasp_force = lfinger_contact_forces[:, 2] - rfinger_contact_forces[:, 2]
-    return (grasp_force * 0.1 + 0.1) * torch.abs(door_pos)
+    force = lfinger_contact_forces[:, 2] - rfinger_contact_forces[:, 2]
+    return torch.where(is_graspable & both_contacted, force, force * 0.1)
+    
+    
+def rotate_lever_with_handle_contact(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    lever_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]]
+    grasp_force = _grasp_force(env, sensor_cfg)
+    
+    # TODO: proportional to the duration of holding handle
+    return grasp_force * 0.1 * (torch.abs(lever_pos) + 1.0)
+
+def open_with_handle_contact(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]]
+    grasp_force = _grasp_force(env, sensor_cfg)
+    return grasp_force * 0.1 * (torch.abs(door_pos) + 1.0)
 
 def contact_penalty(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]

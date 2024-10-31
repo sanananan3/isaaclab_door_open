@@ -52,7 +52,7 @@ SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
     actuators={
         "base": ImplicitActuatorCfg(
             joint_names_expr=["base_joint.*"],
-            velocity_limit=100.0,
+            velocity_limit=0.5,
             effort_limit=1000.0,
             stiffness=0.0,
             damping=1e5,
