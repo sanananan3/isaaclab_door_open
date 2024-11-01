@@ -10,6 +10,7 @@ from dataclasses import MISSING
 
 import omni.isaac.lab.sim as sim_utils
 import omni.isaac.lab_tasks.manager_based.manipulation.reach.mdp as mdp
+from omni.isaac.lab.actuators.actuator_cfg import ImplicitActuatorCfg
 from omni.isaac.lab.assets import ArticulationCfg, AssetBaseCfg
 from omni.isaac.lab.envs import ManagerBasedRLEnvCfg
 from omni.isaac.lab.managers import ObservationGroupCfg as ObsGroup
@@ -59,13 +60,31 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
             activate_contact_sensors=False,
         ),
         init_state=ArticulationCfg.InitialStateCfg(
-            pos=(0.4, -0.8, 0.0),
+            pos=(0.4, -1.0, 0.0),
             rot=(0.0, 0.0, 0.0, 1.0), # 180 deg rotation about z-axis
             joint_pos={
                 "door_joint": 0.0,
                 "lever_joint": 0.0,
             }
         ),
+        actuators={
+            "door_joint": ImplicitActuatorCfg(
+                joint_names_expr=["door_joint"],
+                effort_limit=0.0,
+                velocity_limit=0.0,
+                stiffness=0.0,
+                damping=0.0,
+            ),
+            "lever_joint": ImplicitActuatorCfg(
+                joint_names_expr=["lever_joint"],
+                effort_limit=0.0,
+                velocity_limit=0.0,
+                stiffness=0.0,
+                damping=0.0,
+                armature=0.001,
+                friction=0.3,
+            ),
+        }
     )
     
     handle_frame = FrameTransformerCfg(
@@ -102,13 +121,6 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
 # MDP settings
 ##
 
-
-@configclass
-class CommandsCfg:
-    """Command terms for the MDP."""
-
-    null_command = mdp.NullCommandCfg()
-        
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
@@ -126,17 +138,19 @@ class ObservationsCfg:
         """Observations for policy group."""
         
         # observation terms (order preserved)
-        root_pos = ObsTerm(func=mdp.root_pos_w)
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        
-        handle_joint_pos = ObsTerm(
+        door_joint_pos = ObsTerm(
             func=mdp.joint_pos_rel,
-            params={"asset_cfg": SceneEntityCfg("door", joint_names=["lever_joint"])},
+            params={"asset_cfg": SceneEntityCfg("door", joint_names=["door_joint", "lever_joint"])},
         )
-        handle_joint_vel = ObsTerm(
+        door_joint_vel = ObsTerm(
             func=mdp.joint_vel_rel,
-            params={"asset_cfg": SceneEntityCfg("door", joint_names=["lever_joint"])},
+            params={"asset_cfg": SceneEntityCfg("door", joint_names=["door_joint", "lever_joint"])},
+        )
+        rel_robot_door_distance = ObsTerm(
+            func=mdp.rel_robot_door_distance,
+            params={"asset_cfg": SceneEntityCfg("robot", body_names=["robot_base_link"])}
         )
         rel_ee_door_distance = ObsTerm(func=mdp.rel_ee_door_distance)
         
@@ -160,7 +174,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.2, 0.2), "y": (-0.2, 0.2), "yaw": (-0.5, 0.5)},
+            "pose_range": {"x": (-0.1, 0.1), "y": (-0.1, 0.1), "yaw": (-0.4, 0.4)},
             "velocity_range": {"x": (0.0, 0.0), "y": (0.0, 0.0), "yaw": (0.0, 0.0)}
         },
     )
@@ -177,8 +191,8 @@ class EventCfg:
 @configclass
 class RewardsCfg:
     # 1. Approach the handle
-    approach_ee_handle = RewTerm(func=mdp.approach_ee_handle, weight=2.0, params={"threshold": 0.2})
-    align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=4.0)
+    approach_ee_handle = RewTerm(func=mdp.approach_ee_handle, weight=4.0, params={"threshold": 0.2})
+    align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=3.0)
     
     # 2. Grasp the handle
     approach_gripper_handle = RewTerm(func=mdp.approach_gripper_handle, weight=5.0)
@@ -194,18 +208,24 @@ class RewardsCfg:
     )
     
     # 3. Mobile action
-    keep_safe_area = RewTerm(func=mdp.safe_distance_from_door, weight=50.0)
-    
-    # 4. Penalize actions for cosmetic reasons
-    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.0001)
-    joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
-    base_joint_vel = RewTerm(
-        func=mdp.joint_vel_l2,
-        weight=-0.01,
+    illegal_area = RewTerm(
+        func=mdp.illegal_area, 
+        weight=-50.0,
         params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=["base_joint.*"]),
+            "asset_cfg": SceneEntityCfg("robot", body_names=["robot_base_link"])
         }
     )
+    
+    # 4. Penalize actions for cosmetic reasons
+    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.0001)
+    # joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
+    # base_joint_vel = RewTerm(
+    #     func=mdp.joint_vel_l2,
+    #     weight=-0.01,
+    #     params={
+    #         "asset_cfg": SceneEntityCfg("robot", joint_names=["base_joint.*"]),
+    #     }
+    # )
     
     # 5. Success Bonus
     rotate_handle_bonus = RewTerm(
@@ -247,6 +267,10 @@ class TerminationsCfg:
         func=mdp.success_open_door,
         params={"asset_cfg": SceneEntityCfg("door", joint_names=["door_joint"])}
     )
+    illegal_area = DoneTerm(
+        func=mdp.fail_illegal_area,
+        params={"asset_cfg": SceneEntityCfg("robot", body_names=["robot_base_link"])}
+    )
 
 @configclass
 class DoorEnvCfg(ManagerBasedRLEnvCfg):
@@ -259,7 +283,6 @@ class DoorEnvCfg(ManagerBasedRLEnvCfg):
     actions: ActionsCfg = ActionsCfg()
     events: EventCfg = EventCfg()
     # MDP settings
-    commands: CommandsCfg = CommandsCfg()
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
     curriculum: CurriCulumCfg = CurriCulumCfg()
@@ -269,7 +292,7 @@ class DoorEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 1.5
+        self.episode_length_s = 6
         self.viewer.origin_type = "env"
         self.viewer.eye = (3.0, 0.0, 2.5)
         self.viewer.lookat = (-0.5, -1.0, 0.5)

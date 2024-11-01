@@ -40,3 +40,19 @@ def success_open_door(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, thresho
     is_graspable = sucess_grasp_handle(env)
     
     return torch.abs(is_graspable * door_pos) >= threshold
+
+def fail_illegal_area(
+    env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"), min_dist: float = 0.75, max_dist: float = 1.1
+) -> torch.Tensor:
+    """Terminate when the robot enters illegal area.
+    
+    """
+    # get the (x, y) position of the robot and the handle
+    robot_base_xy = env.scene[asset_cfg.name].data.body_pos_w[..., asset_cfg.body_ids[0], :2]
+    handle_xy = env.scene["handle_frame"].data.target_pos_w[..., 0, :2]
+    # calculate the Euclidean distance between the robot and the handle
+    distance = torch.norm(robot_base_xy - handle_xy, dim=-1, p=2)
+    # calculate the opposite handle (-x) direction distance
+    opposite_dir_distance = handle_xy[:, 0] - robot_base_xy[:, 0]
+    
+    return (distance < min_dist) | (distance > max_dist) | (opposite_dir_distance > 0.2)
