@@ -54,7 +54,7 @@ from omni.isaac.lab_tasks.utils.wrappers.rsl_rl import RslRlOnPolicyRunnerCfg, R
 
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
-torch.backends.cudnn.deterministic = False
+# torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = False
 
 
