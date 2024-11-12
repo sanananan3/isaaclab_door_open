@@ -104,6 +104,7 @@ def main():
             actions = policy(obs)
             # env stepping
             obs, _, _, _ = env.step(actions)
+            print(obs[0, :12])
         if args_cli.video:
             timestep += 1
             # Exit the play loop after recording one video

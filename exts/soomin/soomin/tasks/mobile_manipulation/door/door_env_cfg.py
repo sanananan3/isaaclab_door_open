@@ -60,7 +60,7 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
             activate_contact_sensors=False,
         ),
         init_state=ArticulationCfg.InitialStateCfg(
-            pos=(0.4, -1.0, 0.0),
+            pos=(0.45, -1.05, 0.0),
             rot=(0.0, 0.0, 0.0, 1.0), # 180 deg rotation about z-axis
             joint_pos={
                 "door_joint": 0.0,
@@ -170,14 +170,14 @@ class EventCfg:
     # on reset
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
     
-    reset_root_pos = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.1, 0.1), "yaw": (-0.4, 0.4)},
-            "velocity_range": {"x": (0.0, 0.0), "y": (0.0, 0.0), "yaw": (0.0, 0.0)}
-        },
-    )
+    # reset_root_pos = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": {"x": (-0.1, 0.1), "y": (-0.1, 0.1), "yaw": (-0.4, 0.4)},
+    #         "velocity_range": {"x": (0.0, 0.0), "y": (0.0, 0.0), "yaw": (0.0, 0.0)}
+    #     },
+    # )
     
     door_external_spring_force = EventTerm(
         func=mdp.apply_door_external_torque, 

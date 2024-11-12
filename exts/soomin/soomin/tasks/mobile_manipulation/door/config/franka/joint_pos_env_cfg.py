@@ -12,6 +12,7 @@ FRAME_MARKER_SMALL_CFG.markers["frame"].scale = (0.10, 0.10, 0.10)
 
 from .summit_franka import SUMMIT_FRANKA_PANDA_HIGH_PD_CFG as SUMMIT_FRANKA_CFG
 from .floating_franka import SUMMIT_FRANKA_PANDA_HIGH_PD_CFG as FLOATING_FRANKA_CFG
+from .floating_franka_after_grasp import SUMMIT_FRANKA_PANDA_HIGH_PD_CFG as AFTER_GRASP_FRANKA_CFG
 from soomin.tasks.mobile_manipulation.door import mdp
 from soomin.tasks.mobile_manipulation.door.door_env_cfg import DoorEnvCfg
 
@@ -21,7 +22,7 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         
-        self.scene.robot = FLOATING_FRANKA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+        self.scene.robot = AFTER_GRASP_FRANKA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
         
         self.scene.ee_frame = FrameTransformerCfg(
             prim_path="{ENV_REGEX_NS}/Robot/fr3_link0",

@@ -33,21 +33,20 @@ SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
         rot=(-0.7071, 0.0, 0.0, 0.7071),
         joint_pos={
             # base
-            "base_joint_x": 0.0,
-            "base_joint_y": 0.0,
-            "base_joint_z": 0.0,
+            "base_joint_x": 0.2182,
+            "base_joint_y": 0.1029,
+            "base_joint_z": -0.3618,
             # franka arm
-            "fr3_joint1": 0.0,
-            "fr3_joint2": -0.7853981,   # -45 deg
-            "fr3_joint3": 0.0,
-            "fr3_joint4": -2.3561944,   # -135 deg
-            "fr3_joint5": 0.0,
-            "fr3_joint6": 1.5707963,    # 90 deg
-            "fr3_joint7": 0.7853981,    # 45 deg
+            "fr3_joint1": 0.3295,
+            "fr3_joint2": -0.0928981,
+            "fr3_joint3": -0.3062,
+            "fr3_joint4": -2.4365944,
+            "fr3_joint5": 1.4139,
+            "fr3_joint6": 2.7499963, 
+            "fr3_joint7": 0.6699981, 
             # tool
-            "fr3_finger_joint.*": 0.04,
+            "fr3_finger_joint.*": 0.01,
         },
-        joint_vel={".*": 0.0},
     ),
     actuators={
         "base": ImplicitActuatorCfg(
