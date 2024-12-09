@@ -187,7 +187,10 @@ def _grasp_force(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg) -> torch.Te
     rfinger_contact_forces[:, 2] = torch.clamp(rfinger_contact_forces[:, 2], max=20.0)
     # add +y direction force for right gripper and -y direction force for left gripper
     force = rfinger_contact_forces[:, 2] - lfinger_contact_forces[:, 2]
-    return torch.where(is_graspable & both_contacted, force, force * 0.1)
+
+    current_contact_time = contact_sensor.data.current_contact_time[:, sensor_cfg.body_ids[1]]
+
+    return torch.where(is_graspable & both_contacted, force * current_contact_time, force * current_contact_time * 0.1)
     
     
 def rotate_lever_with_handle_contact(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, asset_cfg: SceneEntityCfg) -> torch.Tensor:

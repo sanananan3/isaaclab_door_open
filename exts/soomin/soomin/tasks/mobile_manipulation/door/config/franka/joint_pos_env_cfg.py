@@ -55,7 +55,8 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
         self.scene.contact_forces = ContactSensorCfg(
             prim_path="{ENV_REGEX_NS}/Robot/.*finger",
             visualizer_cfg=FRAME_MARKER_SMALL_CFG.replace(prim_path="/Visuals/ContactFrameTransformer"),
-            track_pose=True
+            track_pose=True,
+            track_air_time=True,
         )
         
         self.actions.arm_action= mdp.JointPositionActionCfg(
@@ -75,7 +76,7 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
             yaw_joint_name="base_joint_z"
         )
         
-        self.sim.dt = 1 / 60  # 60Hz
+        self.sim.dt = 1 / 1000  # 60Hz
         
 @configclass
 class FrankaDoorEnvCfg_PLAY(FrankaDoorEnvCfg):

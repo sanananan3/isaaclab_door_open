@@ -219,12 +219,12 @@ class RewardsCfg:
     # 5. Success Bonus
     open_door_bonus = RewTerm(
         func=mdp.open_door_bonus,
-        weight=10.0,
+        weight=40.0,
         params={"asset_cfg": SceneEntityCfg("door", joint_names=["door_joint"])}
     )
     open_handle_contact = RewTerm(
         func=mdp.open_with_handle_contact,
-        weight=30.0,
+        weight=50.0,
         params={
             "asset_cfg": SceneEntityCfg("door", joint_names=["door_joint"]),
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*finger")
@@ -273,7 +273,7 @@ class DoorEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 6
+        self.episode_length_s = 12
         self.viewer.origin_type = "env"
         self.viewer.eye = (3.0, 0.0, 2.5)
         self.viewer.lookat = (-0.5, -1.0, 0.5)
