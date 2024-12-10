@@ -252,6 +252,7 @@ class TerminationsCfg:
         func=mdp.fail_illegal_area,
         params={"asset_cfg": SceneEntityCfg("robot", body_names=["robot_base_link"])}
     )
+    illegal_contact = DoneTerm(func=mdp.fail_illegal_contact)
 
 @configclass
 class DoorEnvCfg(ManagerBasedRLEnvCfg):

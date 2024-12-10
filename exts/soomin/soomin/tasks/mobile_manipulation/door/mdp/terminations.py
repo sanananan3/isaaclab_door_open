@@ -56,3 +56,13 @@ def fail_illegal_area(
     opposite_dir_distance = handle_xy[:, 0] - robot_base_xy[:, 0]
     
     return (distance < min_dist) | (distance > max_dist) | (opposite_dir_distance > 0.2)
+
+def fail_illegal_contact(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Terminate when the robot enters illegal area.
+    
+    """
+    # get the (x, y) position of the robot and the handle
+    ee_frame_z = env.scene["ee_frame"].data.target_pos_w[..., 0, 2]
+    door_frame_z = env.scene["handle_frame"].data.target_pos_w[..., 0, 2] - 0.06
+    
+    return (ee_frame_z - door_frame_z < 0)
