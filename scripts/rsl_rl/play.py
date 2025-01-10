@@ -77,6 +77,9 @@ def main():
         print("[INFO] Recording videos during training.")
         print_dict(video_kwargs, nesting=4)
         env = gym.wrappers.RecordVideo(env, **video_kwargs)
+
+
+        
     # wrap around environment for rsl-rl
     env = RslRlVecEnvWrapper(env)
 
