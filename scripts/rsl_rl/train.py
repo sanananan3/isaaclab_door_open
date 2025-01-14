@@ -21,6 +21,8 @@ parser.add_argument("--num_envs", type=int, default=None, help="Number of enviro
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 parser.add_argument("--seed", type=int, default=42, help="Seed used for the environment")
 parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy training iterations.")
+
+
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -79,6 +81,10 @@ def main():
     # max iterations for training
     if args_cli.max_iterations:
         agent_cfg.max_iterations = args_cli.max_iterations
+
+        print("로그 찍기!!!!!!!!!!!!!!!!!!!!!!!!! ", agent_cfg.max_iterations)
+
+        
 
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
