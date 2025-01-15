@@ -12,7 +12,7 @@ from omni.isaac.lab.assets.articulation import ArticulationCfg
 
 O3DYN_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path=f"/home/kist/o3dynsimmodel/o3dyn.usd",
+        usd_path=f"/home/lee/o3dynsimmodel/o3dyn.usd",
         activate_contact_sensors=False,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             rigid_body_enabled=True,

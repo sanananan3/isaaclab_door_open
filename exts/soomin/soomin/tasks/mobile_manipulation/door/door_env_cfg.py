@@ -56,7 +56,7 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
     door = ArticulationCfg(
         prim_path="{ENV_REGEX_NS}/door",
         spawn=sim_utils.UsdFileCfg(
-            usd_path=f"/home/kist/Documents/Resources/door.usd",
+            usd_path=f"/home/lee/Documents/Resources/door.usd",
             activate_contact_sensors=False,
         ),
         init_state=ArticulationCfg.InitialStateCfg(
