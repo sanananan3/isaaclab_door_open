@@ -15,6 +15,8 @@ from omni.isaac.lab.sensors import ContactSensor
 from omni.isaac.lab.utils.math import matrix_from_quat
 from omni.isaac.lab.envs import ManagerBasedRLEnv
 
+
+
 def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor:
     """Reward the robot for reaching the door handle using inverse-square law."""
     ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
@@ -27,6 +29,7 @@ def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor
     reward = 1.0 / (1.0 + distance**2)
     reward = torch.pow(reward, 2)
     return torch.where(distance <= threshold, 2 * reward, reward)
+
 
 def align_ee_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     """Reward for aligning the end-effector with the handle.
@@ -72,6 +75,7 @@ def approach_gripper_handle(env: ManagerBasedRLEnv, offset: float = 0.04) -> tor
 
     return is_graspable * ((offset - lfinger_dist) + (offset - rfinger_dist))
 
+
 def align_grasp_around_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     """Bonus for correct hand orientation around the handle.
     
@@ -88,6 +92,7 @@ def align_grasp_around_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     is_graspable = (rfinger_pos[:, 2] - handle_pos[:, 2]) * (lfinger_pos[:, 2] - handle_pos[:, 2]) < 0
     
     return is_graspable
+
 
 def grasp_handle(
     env: ManagerBasedRLEnv, threshold: float, open_joint_pos: float, asset_cfg: SceneEntityCfg
@@ -109,6 +114,7 @@ def grasp_handle(
 
     return is_close * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
     
+
 def open_door_bonus(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
     """Bonus for opening the door given by the joint position of the door.
 
@@ -119,6 +125,7 @@ def open_door_bonus(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.
 
     return (is_graspable + 1.0) * torch.abs(door_pos)
     
+
 def illegal_area(
     env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"), min_dist: float = 0.8, max_dist: float = 1.05
 ) -> torch.Tensor:
@@ -145,6 +152,7 @@ def illegal_area(
 Penalty terms.
 """
     
+
 def joint_vel_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize joint velocities on the articulation using L2 squared kernel.
 
@@ -153,6 +161,7 @@ def joint_vel_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntity
     # extract the used quantities (to enable type-hinting)
     asset: Articulation = env.scene[asset_cfg.name]
     return torch.sum(torch.square(asset.data.joint_vel[:, asset_cfg.joint_ids]), dim=1)
+
 
 def action_rate_l2(env: ManagerBasedRLEnv) -> torch.Tensor:
     """Penalize the rate of change of the actions using L2 squared kernel."""
@@ -201,6 +210,7 @@ def open_with_handle_contact(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg,
     door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]]
     grasp_force = _grasp_force(env, sensor_cfg)
     return grasp_force * 0.1 * (torch.abs(door_pos) + 1.0)
+
 
 def contact_penalty(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
