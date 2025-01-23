@@ -50,7 +50,7 @@ Before using this template, ensure the following dependencies are installed:
 To train the robot to grasp the door using the PPO algorithm from RSL-RL:
 
 ```shell
-python scripts/rsl_rl/train.py --task Template-Isaac-Open-Door-Franka-v0 --num_envs 64
+python scripts/rsl_rl/train.py --task Template-Isaac-Open-Door-Franka-v0 --num_envs 64 --log_dir [actual_dir]
 ```
 
 ### Evaluation
