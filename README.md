@@ -57,7 +57,7 @@ python scripts/rsl_rl/train.py --task Template-Isaac-Open-Door-Franka-v0 --num_e
 To evaluate a pre-trained model:
 
 ```shell
-python scripts/rsl_rl/play.py --task Template-Isaac-Open-Door-Franka-Play-v0 --num_envs 1
+python scripts/rsl_rl/play.py --task Template-Isaac-Open-Door-Franka-Play-v0 --num_envs 1 --log_dir [actual_dir]
 ```
 
 ### Experiment Results
