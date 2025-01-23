@@ -19,6 +19,11 @@ parser.add_argument(
 parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
+
+# add argparse for select log file 
+
+parser.add_argument("--log_dir", type=str, default=None, help="specify Log directory to load the model from.") 
+
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -57,12 +62,17 @@ def main():
     )
     agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)
 
+    print("[INFO] logs file configure ", agent_cfg.experiment_name) # print result -> franka_open_door
+
     # specify directory for logging experiments
     log_root_path = os.path.join("logs", "rsl_rl", agent_cfg.experiment_name)
     log_root_path = os.path.abspath(log_root_path)
-    print(f"[INFO] Loading experiment from directory: {log_root_path}")
-    resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
-    log_dir = os.path.dirname(resume_path)
+
+    print(f"[INFO] Loading experiment from directory: {log_root_path}") # print result -> [INFO] Loading experiment from directory: /home/lee/isaaclab_door_open/logs/rsl_rl/tranka_open_door
+    # print("[DEBUG] log_dir ", args_cli.log_dir)
+    resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint, log_dir = args_cli.log_dir) # get_checkpoint_path(log_path, run_dir, checkpoint, other_dirs, sort_alpha, log_dir)
+    print("[INFO] resume_path " , resume_path) # print result -> /home/lee/isaaclab_door_open/logs/rsl_rl/franka_open_door/2025-01-22_09-14-36_60hz/model_999.pt
+    log_dir = os.path.dirname(resume_path) 
 
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
@@ -104,6 +114,8 @@ def main():
             actions = policy(obs)
             # env stepping
             obs, _, _, _ = env.step(actions)
+            # print("[INFO] Observation : ", obs) # add observation checking for understanging
+
         if args_cli.video:
             timestep += 1
             # Exit the play loop after recording one video
