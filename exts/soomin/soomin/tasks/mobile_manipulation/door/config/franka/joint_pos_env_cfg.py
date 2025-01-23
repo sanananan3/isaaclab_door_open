@@ -19,10 +19,13 @@ from soomin.tasks.mobile_manipulation.door.door_env_cfg import DoorEnvCfg
 @configclass
 class FrankaDoorEnvCfg(DoorEnvCfg):
     def __post_init__(self):
+
+        # call post_init function of parent 
         super().__post_init__()
         
         self.scene.robot = FLOATING_FRANKA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
         
+        # ee = end-effector 
         self.scene.ee_frame = FrameTransformerCfg(
             prim_path="{ENV_REGEX_NS}/Robot/fr3_link0",
             debug_vis=False,

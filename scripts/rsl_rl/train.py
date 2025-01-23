@@ -64,6 +64,7 @@ def main():
     env_cfg: ManagerBasedRLEnvCfg = parse_env_cfg(
         args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric
     )
+    print("[INFO] Environment configuration in train.py From :", env_cfg)
     agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)
 
     # specify directory for logging experiments

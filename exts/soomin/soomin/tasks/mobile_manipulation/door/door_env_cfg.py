@@ -38,9 +38,8 @@ FRAME_MARKER_SMALL_CFG.markers["frame"].scale = (0.10, 0.10, 0.10)
 
 
 ##
-# Scene definition
+# 1. Scene definition
 ##
-
 
 @configclass
 class FrankaDoorSceneCfg(InteractiveSceneCfg):
@@ -118,9 +117,13 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
         
         
 ##
-# MDP settings
+# 2. MDP settings (actions, obervations, event, rewards, terminations)
 ##
 
+
+## 
+# 2.1 Action Configurations
+##
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
@@ -129,6 +132,10 @@ class ActionsCfg:
 
     mobile_action: ActionTerm | None = None
 
+
+## 
+# 2.2 Observation Configurations
+##
 @configclass
 class ObservationsCfg:
     """Observation specifications for the MDP."""
@@ -163,6 +170,10 @@ class ObservationsCfg:
     # observation groups
     policy: PolicyCfg = PolicyCfg()
     
+
+## 
+# 2.3 Event Configurations
+##
 @configclass
 class EventCfg:
     """Configuration for events."""
@@ -187,7 +198,9 @@ class EventCfg:
         }
     )
 
-    
+## 
+# 2.4 Reward Configurations
+##
 @configclass
 class RewardsCfg:
     # 1. Approach the handle
@@ -197,6 +210,7 @@ class RewardsCfg:
     # 2. Grasp the handle
     approach_gripper_handle = RewTerm(func=mdp.approach_gripper_handle, weight=5.0)
     align_grasp_around_handle = RewTerm(func=mdp.align_grasp_around_handle, weight=3.0)
+    
     grasp_handle = RewTerm(
         func=mdp.grasp_handle,
         weight=3.0,
@@ -255,7 +269,10 @@ class CurriCulumCfg:
     # door_stiffness = CurrTerm(func=mdp.door_joint_stiffness)
     pass
     
-    
+## 
+# 2.5 Termination Configurations
+##
+
 @configclass
 class TerminationsCfg:
     # Time out
@@ -272,17 +289,22 @@ class TerminationsCfg:
         params={"asset_cfg": SceneEntityCfg("robot", body_names=["robot_base_link"])}
     )
 
+
+##
+# 3. Tying up the configurations (scene + MDP)
+##
+
 @configclass
 class DoorEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the franka door opening environment."""
     
     # Scene settings
     scene: FrankaDoorSceneCfg = FrankaDoorSceneCfg(num_envs=4096, env_spacing=6.5)
-    # Basic settings
+    # Basic settings (base terms)
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
     events: EventCfg = EventCfg()
-    # MDP settings
+    # MDP settings (RL terms)
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
     curriculum: CurriCulumCfg = CurriCulumCfg()
@@ -290,6 +312,7 @@ class DoorEnvCfg(ManagerBasedRLEnvCfg):
     
     def __post_init__(self):
         """Post initialization."""
+        print("[DEBUG] check for DoorEnvCfg post init")
         # general settings
         self.decimation = 2
         self.episode_length_s = 6
@@ -297,9 +320,10 @@ class DoorEnvCfg(ManagerBasedRLEnvCfg):
         self.viewer.eye = (3.0, 0.0, 2.5)
         self.viewer.lookat = (-0.5, -1.0, 0.5)
         # simulation settings
-        self.sim.dt = 1 / 60  # 1000Hz -> change to 60 hz for testing 
+        self.sim.dt = 1 / 1000  # 1000Hz -> change to 60 hz for testing 
 
         print("[INFO] dt Setting for simulation ", self.sim.dt )
+
         
         self.sim.render_interval = self.decimation
         self.sim.physx.bounce_threshold_velocity = 0.2

@@ -10,6 +10,8 @@ from . import agents, joint_pos_env_cfg
 # Joint Position Control
 ##
 
+
+# For Training
 gym.register(
     id="Template-Isaac-Open-Door-Franka-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
@@ -22,6 +24,7 @@ gym.register(
     disable_env_checker=True,
 )
 
+# For Playing
 gym.register(
     id="Template-Isaac-Open-Door-Franka-Play-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
