@@ -39,6 +39,7 @@ simulation_app = app_launcher.app
 import gymnasium as gym
 import os
 import torch
+import time 
 from datetime import datetime
 
 from rsl_rl.runners import OnPolicyRunner
@@ -60,11 +61,14 @@ torch.backends.cudnn.benchmark = False
 
 def main():
     """Train with RSL-RL agent."""
+    # For logging time 
+    start_time = time.time() 
+
     # parse configuration
     env_cfg: ManagerBasedRLEnvCfg = parse_env_cfg(
         args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric
     )
-    print("[INFO] Environment configuration in train.py From :", env_cfg)
+    # print("[INFO] Environment configuration in train.py From :", env_cfg)
     agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)
 
     # specify directory for logging experiments
@@ -120,6 +124,12 @@ def main():
 
     # run training
     runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
+
+    end_time = time.time() 
+
+    total_time = end_time - start_time
+
+    dump_yaml(os.path.join(log_dir, "params", "time.yaml"), {"total_time": total_time}) # store training time in logs directory 
 
     # close the simulator
     env.close()

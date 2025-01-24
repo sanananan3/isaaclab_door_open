@@ -60,7 +60,7 @@ def main():
     env_cfg = parse_env_cfg(
         args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric
     )
-    print("[INFO] Environment configuration in play.py From : ", env_cfg) 
+    # print("[INFO] Environment configuration in play.py From : ", env_cfg) 
     agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)
 
     print("[INFO] logs file configure ", agent_cfg.experiment_name) # print result -> franka_open_door

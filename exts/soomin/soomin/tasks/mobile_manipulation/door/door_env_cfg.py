@@ -320,7 +320,7 @@ class DoorEnvCfg(ManagerBasedRLEnvCfg):
         self.viewer.eye = (3.0, 0.0, 2.5)
         self.viewer.lookat = (-0.5, -1.0, 0.5)
         # simulation settings
-        self.sim.dt = 1 / 1000  # 1000Hz -> change to 60 hz for testing 
+        self.sim.dt = 1 / 60  # 1000Hz -> change to 60 hz for testing 
 
         print("[INFO] dt Setting for simulation ", self.sim.dt )
 
