@@ -317,8 +317,12 @@ class DoorEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         print("[DEBUG] check for DoorEnvCfg post init")
         # general settings
+
+        # ============= termination criteria ============
         self.decimation = 2
-        self.episode_length_s = 6 # termination criteria 
+        self.episode_length_s = 8 # 6 -> 8
+        # ===============================================
+
         self.viewer.origin_type = "env"
         self.viewer.eye = (3.0, 0.0, 2.5)
         self.viewer.lookat = (-0.5, -1.0, 0.5)
