@@ -40,6 +40,7 @@ import gymnasium as gym
 import os
 import torch
 import time 
+
 from datetime import datetime
 
 from rsl_rl.runners import OnPolicyRunner
@@ -122,21 +123,30 @@ def main():
     dump_pickle(os.path.join(log_dir, "params", "env.pkl"), env_cfg)
     dump_pickle(os.path.join(log_dir, "params", "agent.pkl"), agent_cfg)
 
-    # run training
-    runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
+    # if training fails, close the simulator and save the log file 
+    try:
+        # run training
+        runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
 
-    end_time = time.time() 
+    except Exception as e:
+        print(f"[ERROR] Training failed: {e}")
+        
+    finally: 
+        end_time = time.time() 
 
-    total_time = end_time - start_time
+        total_time = end_time - start_time
 
-    dump_yaml(os.path.join(log_dir, "params", "time.yaml"), {"total_time": total_time}) # store training time in logs directory 
+        dump_yaml(os.path.join(log_dir, "params", "time.yaml"), {"total_time": total_time}) # store training time in logs directory 
 
-    # close the simulator
-    env.close()
+        # close the simulator
+        env.close()
 
 
+    
 if __name__ == "__main__":
     # run the main execution
     main()
     # close sim app
     simulation_app.close()
+    torch.cuda.empty_cache()
+

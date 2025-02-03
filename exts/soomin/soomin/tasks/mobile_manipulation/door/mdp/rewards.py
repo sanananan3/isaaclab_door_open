@@ -19,15 +19,15 @@ from omni.isaac.lab.envs import ManagerBasedRLEnv
 
 def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor:
     """Reward the robot for reaching the door handle using inverse-square law."""
-    ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
-    handle_pos = env.scene["handle_frame"].data.target_pos_w[..., 0, :]
+    ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :] # world coordinate of the end-effector
+    handle_pos = env.scene["handle_frame"].data.target_pos_w[..., 0, :] # world coordinate of the handle 
 
     # Compute the distance of the end-effector to the handle
     distance = torch.norm(handle_pos - ee_tcp_pos, dim=-1, p=2)
 
     # Reward the robot for reaching the handle
     reward = 1.0 / (1.0 + distance**2)
-    reward = torch.pow(reward, 2)
+    reward = torch.pow(reward, 2) # square -> more reward for being closer 
     return torch.where(distance <= threshold, 2 * reward, reward)
 
 
