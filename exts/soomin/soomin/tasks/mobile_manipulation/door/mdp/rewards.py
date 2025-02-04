@@ -43,13 +43,15 @@ def align_ee_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     handle_mat = matrix_from_quat(handle_quat)
     
     # get current x and y direction of the handle
-    handle_x, handle_z = handle_mat[..., 0], handle_mat[..., 2]
+    handle_x, handle_y, handle_z = handle_mat[..., 0],  handle_mat[..., 1] , handle_mat[..., 2]
     # get current x and z direction of the gripper
-    ee_tcp_x, ee_tcp_z = ee_tcp_rot_mat[..., 0], ee_tcp_rot_mat[..., 2]
+    ee_tcp_x, ee_tcp_y, ee_tcp_z = ee_tcp_rot_mat[..., 0], ee_tcp_rot_mat[..., 1] , ee_tcp_rot_mat[..., 2]
     
     align_z = torch.bmm(ee_tcp_z.unsqueeze(1), -handle_z.unsqueeze(-1)).squeeze(-1).squeeze(-1)
     align_x = torch.bmm(ee_tcp_x.unsqueeze(1), -handle_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
-    return 0.5 * (torch.sign(align_z) * align_z**2 + torch.sign(align_x) * align_x**2)
+    align_y = torch.bmm(ee_tcp_y.unsqueeze(1), -handle_y.unsqueeze(-1)).squeeze(-1).squeeze(-1)
+
+    return  (torch.sign(align_z) * align_z**2 + torch.sign(align_x) * align_x**2) * 0.5 + 0.2 *(torch.sign(align_y) * align_y**2) 
     
     
 
@@ -105,15 +107,28 @@ def grasp_handle(
     Note:
         It is assumed that zero joint position corresponds to the fingers being closed.
     """
+
     ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
     handle_pos = env.scene["handle_frame"].data.target_pos_w[..., 0, :]
     gripper_joint_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids]
 
     distance = torch.norm(handle_pos - ee_tcp_pos, dim=-1, p=2)
+
+   # print("[INFO] In grasp_handle, Distance: ", distance)
+
     is_close = distance <= threshold
 
-    return is_close * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
+  #  print("[INFO] IN grasp_handle, is_close: ", is_close)
+
     
+   # grasp_force = torch.sum(torch.abs(gripper_joint_pos), dim=-1)
+
+   # print("[INFO] IN grasp_handle, grasp_force * is_close = ", grasp_force * is_close)
+
+    return is_close * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
+
+    # return is_close * grasp_force
+
 
 def open_door_bonus(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
     """Bonus for opening the door given by the joint position of the door.

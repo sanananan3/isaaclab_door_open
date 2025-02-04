@@ -215,7 +215,7 @@ class RewardsCfg:
         func=mdp.grasp_handle,
         weight=3.0,
         params={
-            "threshold": 0.03,
+            "threshold": 0.06, # previous = 0.03
             "open_joint_pos": 0.04,
             "asset_cfg": SceneEntityCfg("robot", joint_names=["fr3_finger_joint.*"]),
         },
