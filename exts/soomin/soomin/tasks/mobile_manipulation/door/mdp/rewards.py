@@ -51,7 +51,7 @@ def align_ee_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     align_x = torch.bmm(ee_tcp_x.unsqueeze(1), -handle_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
     align_y = torch.bmm(ee_tcp_y.unsqueeze(1), -handle_y.unsqueeze(-1)).squeeze(-1).squeeze(-1)
 
-    return  (torch.sign(align_z) * align_z**2 + torch.sign(align_x) * align_x**2) * 0.5 + 0.2 *(torch.sign(align_y) * align_y**2) 
+    return  (torch.sign(align_z) * align_z**2 + torch.sign(align_x) * align_x**2) * 0.5 + 0.15 *(torch.sign(align_y) * align_y**2) 
     
     
 
@@ -73,7 +73,7 @@ def approach_gripper_handle(env: ManagerBasedRLEnv, offset: float = 0.04) -> tor
     rfinger_dist = torch.abs(rfinger_pos[:, 2] - handle_pos[:, 2])
 
     # Check if hand is in a graspable pose
-    is_graspable = (rfinger_pos[:, 2] - handle_pos[:, 2]) * (lfinger_pos[:, 2] - handle_pos[:, 2]) < 0
+    is_graspable = (rfinger_pos[:, 2] - handle_pos[:, 2]) * (lfinger_pos[:, 2] - handle_pos[:, 2]) < 0 # one finger above and the other beblow the handle 
 
     return is_graspable * ((offset - lfinger_dist) + (offset - rfinger_dist))
 
@@ -121,13 +121,13 @@ def grasp_handle(
   #  print("[INFO] IN grasp_handle, is_close: ", is_close)
 
     
-   # grasp_force = torch.sum(torch.abs(gripper_joint_pos), dim=-1)
+    #grasp_force = torch.sum(torch.abs(gripper_joint_pos), dim=-1)
 
    # print("[INFO] IN grasp_handle, grasp_force * is_close = ", grasp_force * is_close)
 
     return is_close * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
 
-    # return is_close * grasp_force
+    #return is_close * grasp_force
 
 
 def open_door_bonus(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:

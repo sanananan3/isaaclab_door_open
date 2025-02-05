@@ -8,7 +8,7 @@ from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.envs import ManagerBasedRLEnv
 
 
-def sucess_grasp_handle(env: ManagerBasedRLEnv, threshold: float = 0.01) -> torch.Tensor:
+def sucess_grasp_handle(env: ManagerBasedRLEnv, threshold: float = 0.015) -> torch.Tensor: # previous threshold: 0.01
     """Terminate when the robot's gripper reaching the door handle with the right pose.
 
     This function returns True if the distance of fingertips to the handle is small enough when the fingers are in a grasping orientation
@@ -27,7 +27,11 @@ def sucess_grasp_handle(env: ManagerBasedRLEnv, threshold: float = 0.01) -> torc
 
     # Check if hand is in a graspable pose
     is_graspable = (rfinger_pos[:, 2] < handle_pos[:, 2]) & (lfinger_pos[:, 2] > handle_pos[:, 2])
-    grasping = (lfinger_dist <= threshold) | (rfinger_dist <= threshold)
+
+    # ===================================================================================
+    # grasping = (lfinger_dist <= threshold) | (rfinger_dist <= threshold)
+    grasping = (lfinger_dist <= threshold) & (rfinger_dist <= threshold)
+    # ===================================================================================
 
     return is_graspable & grasping
 

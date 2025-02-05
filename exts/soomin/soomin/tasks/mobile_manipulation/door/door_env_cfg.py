@@ -205,7 +205,7 @@ class EventCfg:
 class RewardsCfg:
     # 1. Approach the handle
     approach_ee_handle = RewTerm(func=mdp.approach_ee_handle, weight=4.0, params={"threshold": 0.2}) # threshold : hyperparameter
-    align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=3.0)
+    align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=3.0) 
     
     # 2. Grasp the handle
     approach_gripper_handle = RewTerm(func=mdp.approach_gripper_handle, weight=5.0)
@@ -213,9 +213,9 @@ class RewardsCfg:
     
     grasp_handle = RewTerm(
         func=mdp.grasp_handle,
-        weight=3.0,
+        weight= 4.0, # previous - 3.0
         params={
-            "threshold": 0.06, # previous = 0.03
+            "threshold": 0.035, # previous - 0.03
             "open_joint_pos": 0.04,
             "asset_cfg": SceneEntityCfg("robot", joint_names=["fr3_finger_joint.*"]),
         },
@@ -283,10 +283,12 @@ class TerminationsCfg:
 
     # Task Success
     # grasp_door = DoneTerm(func=mdp.sucess_grasp_handle)
+
     open_door = DoneTerm(
         func=mdp.success_open_door,
         params={"asset_cfg": SceneEntityCfg("door", joint_names=["door_joint"])}
     )
+
     illegal_area = DoneTerm(
         func=mdp.fail_illegal_area,
         params={"asset_cfg": SceneEntityCfg("robot", body_names=["robot_base_link"])}
