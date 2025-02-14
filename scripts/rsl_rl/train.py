@@ -63,6 +63,8 @@ torch.backends.cudnn.benchmark = False
 def main():
     """Train with RSL-RL agent."""
     # For logging time 
+
+    os.environ["RUNNING_MODE"] = "train"
     start_time = time.time() 
 
     # parse configuration

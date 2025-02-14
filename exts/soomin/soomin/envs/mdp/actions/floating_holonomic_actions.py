@@ -98,6 +98,9 @@ class FloatingHolonomicAction(ActionTerm):
         self._processed_actions = self.raw_actions * self._scale + self._offset
 
     def apply_actions(self):
+
+        # CALLED  
+
         # obtain current heading
         quat_w = self._asset.data.body_quat_w[:, self._body_idx[0]]
         yaw_w = euler_xyz_from_quat(quat_w)[2]

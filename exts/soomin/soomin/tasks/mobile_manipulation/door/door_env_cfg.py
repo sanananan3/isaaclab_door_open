@@ -56,7 +56,7 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/door",
         spawn=sim_utils.UsdFileCfg(
             usd_path=f"/home/lee/Documents/Resources/door.usd",
-            activate_contact_sensors=False,
+            activate_contact_sensors=False, # previous: False
         ),
         init_state=ArticulationCfg.InitialStateCfg(
             pos=(0.4, -1.0, 0.0),
@@ -114,6 +114,7 @@ class FrankaDoorSceneCfg(InteractiveSceneCfg):
         prim_path="/World/light",
         spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=3000.0),
     )
+
         
         
 ##
@@ -204,22 +205,22 @@ class EventCfg:
 @configclass
 class RewardsCfg:
     # 1. Approach the handle
-    approach_ee_handle = RewTerm(func=mdp.approach_ee_handle, weight=4.0, params={"threshold": 0.2}) # threshold : hyperparameter
+    approach_ee_handle = RewTerm(func=mdp.approach_ee_handle, weight=5.0, params={"threshold": 0.15}) # threshold : hyperparameter
     align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=3.0) 
     
     # 2. Grasp the handle
     approach_gripper_handle = RewTerm(func=mdp.approach_gripper_handle, weight=5.0)
-    align_grasp_around_handle = RewTerm(func=mdp.align_grasp_around_handle, weight=3.0)
+    align_grasp_around_handle = RewTerm(func=mdp.align_grasp_around_handle, weight=10.0)
     
-    grasp_handle = RewTerm(
-        func=mdp.grasp_handle,
-        weight= 4.0, # previous - 3.0
-        params={
-            "threshold": 0.035, # previous - 0.03
-            "open_joint_pos": 0.04,
-            "asset_cfg": SceneEntityCfg("robot", joint_names=["fr3_finger_joint.*"]),
-        },
-    )
+    # grasp_handle = RewTerm(
+    #     func=mdp.grasp_handle,
+    #     weight= 10.0, # previous - 3.0
+    #     params={
+    #         "upper_threshold": 0.035, # previous - 0.03
+    #         "open_joint_pos": 0.04,
+    #         "asset_cfg": SceneEntityCfg("robot", joint_names=["fr3_finger_joint.*"]),
+    #     },
+    # )
     
     # 3. Mobile action
     illegal_area = RewTerm(
@@ -229,17 +230,18 @@ class RewardsCfg:
             "asset_cfg": SceneEntityCfg("robot", body_names=["robot_base_link"])
         }
     )
-    
+
+
     # 4. Penalize actions for cosmetic reasons
-    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.0001)
-    # joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
-    # base_joint_vel = RewTerm(
-    #     func=mdp.joint_vel_l2,
-    #     weight=-0.01,
-    #     params={
-    #         "asset_cfg": SceneEntityCfg("robot", joint_names=["base_joint.*"]),
-    #     }
-    # )
+    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.0001)
+    joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
+    base_joint_vel = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-0.01,
+        params={
+            "asset_cfg": SceneEntityCfg("robot", joint_names=["base_joint.*"]),
+        }
+    )
     
     # 5. Success Bonus
     rotate_handle_bonus = RewTerm(
@@ -282,6 +284,7 @@ class TerminationsCfg:
     print("[INFO] Termination Criteria : Time out ", time_out)
 
     # Task Success
+
     # grasp_door = DoneTerm(func=mdp.sucess_grasp_handle)
 
     open_door = DoneTerm(

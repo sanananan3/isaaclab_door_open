@@ -24,11 +24,27 @@ def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor
 
     # Compute the distance of the end-effector to the handle
     distance = torch.norm(handle_pos - ee_tcp_pos, dim=-1, p=2)
+    
+
+    # print("[info] in approach_ee_handle, handle_pos[0][1] : ", handle_pos[0][1])
+    
+
+    # signed_disance_y = torch.sign(handle_pos[0][1] - ee_tcp_pos[0][1]-0.009) 
+
+    direction_to_handle = handle_pos - ee_tcp_pos - 0.01
+
+    door_normal = torch.tensor([0.0, 1.0, 0.0], device=handle_pos.device) # manually change the door normal vector (current: y-axis)
+
+    collision_check = torch.sum(direction_to_handle * door_normal, dim=-1)
+
+    is_valid = torch.logical_and(distance <= threshold, collision_check < 0) 
 
     # Reward the robot for reaching the handle
     reward = 1.0 / (1.0 + distance**2)
     reward = torch.pow(reward, 2) # square -> more reward for being closer 
-    return torch.where(distance <= threshold, 2 * reward, reward)
+
+    # print("[info] In approach_ee_handle, distance : " ,distance  )
+    return torch.where(is_valid, 2 * reward, reward/2)
 
 
 def align_ee_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
@@ -49,9 +65,9 @@ def align_ee_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     
     align_z = torch.bmm(ee_tcp_z.unsqueeze(1), -handle_z.unsqueeze(-1)).squeeze(-1).squeeze(-1)
     align_x = torch.bmm(ee_tcp_x.unsqueeze(1), -handle_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
-    align_y = torch.bmm(ee_tcp_y.unsqueeze(1), -handle_y.unsqueeze(-1)).squeeze(-1).squeeze(-1)
+    align_y = torch.bmm(ee_tcp_y.unsqueeze(1), -handle_y.unsqueeze(-1)).squeeze(-1).squeeze(-1) 
 
-    return  (torch.sign(align_z) * align_z**2 + torch.sign(align_x) * align_x**2) * 0.5 + 0.15 *(torch.sign(align_y) * align_y**2) 
+    return (torch.sign(align_z) * align_z**2 + torch.sign(align_x) * align_x**2) * 0.5 +  0.2 * torch.sign(align_y) * align_y**2
     
     
 
@@ -96,9 +112,14 @@ def align_grasp_around_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     return is_graspable
 
 
+
+
 def grasp_handle(
-    env: ManagerBasedRLEnv, threshold: float, open_joint_pos: float, asset_cfg: SceneEntityCfg
+    env: ManagerBasedRLEnv, upper_threshold: float, open_joint_pos: float, asset_cfg: SceneEntityCfg
 ) -> torch.Tensor:
+    
+    # asset_cfg = fr3_finger joint.*
+
     """Reward for closing the fingers when being close to the handle.
 
     The :attr:`threshold` is the distance from the handle at which the fingers should be closed.
@@ -108,26 +129,18 @@ def grasp_handle(
         It is assumed that zero joint position corresponds to the fingers being closed.
     """
 
+
     ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
     handle_pos = env.scene["handle_frame"].data.target_pos_w[..., 0, :]
     gripper_joint_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids]
-
+    
     distance = torch.norm(handle_pos - ee_tcp_pos, dim=-1, p=2)
 
-   # print("[INFO] In grasp_handle, Distance: ", distance)
+    is_valid = distance <= upper_threshold
 
-    is_close = distance <= threshold
+    return is_valid * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
 
-  #  print("[INFO] IN grasp_handle, is_close: ", is_close)
 
-    
-    #grasp_force = torch.sum(torch.abs(gripper_joint_pos), dim=-1)
-
-   # print("[INFO] IN grasp_handle, grasp_force * is_close = ", grasp_force * is_close)
-
-    return is_close * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
-
-    #return is_close * grasp_force
 
 
 def open_door_bonus(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
@@ -140,6 +153,8 @@ def open_door_bonus(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.
 
     return (is_graspable + 1.0) * torch.abs(door_pos)
     
+
+
 
 def illegal_area(
     env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"), min_dist: float = 0.8, max_dist: float = 1.05
@@ -190,7 +205,7 @@ def _grasp_force(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg) -> torch.Te
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
     contact_forces = contact_sensor.data.net_forces_w[:, sensor_cfg.body_ids] # shape = (N, 2, 3)
 
-    contact_quat_l = contact_sensor.data.quat_w[:, 0] # (N, 4)
+    contact_quat_l = contact_sensor.data.quat_w[:, 0] # (N, 4), quat -> quaternion rotation 
     contact_quat_r = contact_sensor.data.quat_w[:, 1] # (N, 4)
 
     lfinger_contact_forces = F.pad(contact_forces[:, 0], (1, 0)) # (N, 4)

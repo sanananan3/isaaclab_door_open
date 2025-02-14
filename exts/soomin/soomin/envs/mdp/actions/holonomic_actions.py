@@ -114,6 +114,8 @@ class HolonomicAction(ActionTerm):
             processed_actions (torch.Tensor): (num_envs, 3) shape. 3 = [forward speed, lateral speed, yaw speed]
             _joint_vel_command (torch.Tensor): (num_envs, 4) shape. 4 = [fl, fr, rl, rr]
         """
+        # NOT CALLED 
+
         # compute joint velocity targets
         self._joint_vel_command[:] = self._holonomic_controller.compute()
         # set the joint velocity targets

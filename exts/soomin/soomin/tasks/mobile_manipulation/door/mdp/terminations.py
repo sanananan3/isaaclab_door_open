@@ -8,7 +8,7 @@ from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.envs import ManagerBasedRLEnv
 
 
-def sucess_grasp_handle(env: ManagerBasedRLEnv, threshold: float = 0.015) -> torch.Tensor: # previous threshold: 0.01
+def sucess_grasp_handle(env: ManagerBasedRLEnv, threshold: float = 0.02) -> torch.Tensor: # previous threshold: 0.01
     """Terminate when the robot's gripper reaching the door handle with the right pose.
 
     This function returns True if the distance of fingertips to the handle is small enough when the fingers are in a grasping orientation
@@ -26,13 +26,14 @@ def sucess_grasp_handle(env: ManagerBasedRLEnv, threshold: float = 0.015) -> tor
     rfinger_dist = torch.abs(rfinger_pos[:, 2] - handle_pos[:, 2])
 
     # Check if hand is in a graspable pose
-    is_graspable = (rfinger_pos[:, 2] < handle_pos[:, 2]) & (lfinger_pos[:, 2] > handle_pos[:, 2])
-
+    is_graspable = (rfinger_pos[:, 2] - handle_pos[:, 2]) * (lfinger_pos[:, 2] - handle_pos[:, 2]) < 0 # one finger above and the other beblow the handle 
+    
+    # print("[INFO] IN terminations.py->sucess_grasp_handle, is_graspable : ", is_graspable) 
     # ===================================================================================
-    # grasping = (lfinger_dist <= threshold) | (rfinger_dist <= threshold)
-    grasping = (lfinger_dist <= threshold) & (rfinger_dist <= threshold)
+    # grasping = (lfinger_dist <= threshold) | (rfinger_dist <= threshold) # Previous code 
+    grasping = (lfinger_dist <= threshold) & (rfinger_dist <= threshold) # change code ( | -> & )
     # ===================================================================================
-
+    # print("[INFO] IN terminations.py->sucess_grasp_handle, grasping : ", grasping) # exist True 
     return is_graspable & grasping
 
 def success_open_door(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, threshold: float = 0.26) -> torch.Tensor:
@@ -41,8 +42,10 @@ def success_open_door(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, thresho
     This function returns True if the door joint position is over the threshold. Otherwise, it returns False.
     """
     door_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids[0]]
-    is_graspable = sucess_grasp_handle(env)
+    is_graspable = sucess_grasp_handle(env) # always False .... 
     
+    # print("[INFO] IN terminations.py->success_open_door, door_pos : ", door_pos) 
+
     return torch.abs(is_graspable * door_pos) >= threshold
 
 def fail_illegal_area(
