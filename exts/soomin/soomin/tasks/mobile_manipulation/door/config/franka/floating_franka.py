@@ -28,10 +28,11 @@ SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
             enabled_self_collisions=False, solver_position_iteration_count=8, solver_velocity_iteration_count=0
         ), # existing : enable_self_collisions=True
-   
+        
+        # For collision check in the simulation (True/False)
         collision_props = sim_utils.CollisionPropertiesCfg(
-            collision_enabled=False,
-        )
+            collision_enabled=True,
+        ) 
          ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.039),
