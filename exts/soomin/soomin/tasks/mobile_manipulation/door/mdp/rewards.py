@@ -25,10 +25,15 @@ def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor
     # Compute the distance of the end-effector to the handle
     distance = torch.norm(handle_pos - ee_tcp_pos, dim=-1, p=2)
     
+    # generalize collision check 
     direction_to_handle = handle_pos - ee_tcp_pos - 0.009
 
-    door_normal = torch.tensor([0.0, 1.0, 0.0], device=handle_pos.device) # manually change the door normal vector (current: y-axis)
+    # =========== manually change the door normal vector (current: y-axis) =================
 
+    door_normal = torch.tensor([0.0, 1.0, 0.0], device=handle_pos.device) 
+
+    # =====================================================================================
+    
     collision_check = torch.sum(direction_to_handle * door_normal, dim=-1)
 
     is_valid = torch.logical_and(distance <= threshold, collision_check < 0.0  ) 

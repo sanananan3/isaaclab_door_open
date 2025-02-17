@@ -25,7 +25,7 @@ from omni.isaac.lab.envs import ManagerBasedRLEnv
 def update_gripper_action (env: ManagerBasedRLEnv): 
     """
         In single PPO, gripper's training is not working properly. Then, tried to implememt the gripper's action manually. 
-        This function is called in the step function of the environment. (play & train)
+        This function is called in the step function of the environment. (only play not train) 
           
         type(env.cfg) = FrankaDoorEnvCfg / type(env) = ManagerBasedRLEnv
     """
@@ -35,8 +35,7 @@ def update_gripper_action (env: ManagerBasedRLEnv):
     handle_pos = env.scene["handle_frame"].data.target_pos_w[..., 0, :] # world coordinate of the handle 
 
     distance = torch.norm(ee_tcp_pos- handle_pos, dim = -1, p = 2)
-    print("distance :" , distance)
-
+  
     # for alignment calculation
     ee_fingertips_w = env.scene["ee_frame"].data.target_pos_w[..., 1:, :]
     lfinger_pos = ee_fingertips_w[..., 0, :]
@@ -48,10 +47,6 @@ def update_gripper_action (env: ManagerBasedRLEnv):
 
     gripper_action = env.action_manager.get_term("gripper_action")
     
-    print("is _valid? ", is_valid)
-
-    print("joint distance :", env.scene["robot"].data.joint_pos[:, gripper_action._joint_ids])
-
     for i in range(distance.shape[0]):
 
         if not hasattr(env, "gripper_locked"):
@@ -60,8 +55,8 @@ def update_gripper_action (env: ManagerBasedRLEnv):
 
         if is_valid[i] or env.gripper_locked[i]:
 
-            gripper_action._open_command[:] = 0.015
-            gripper_action._close_command[:] = 0.015
+            gripper_action._open_command[:] = 0.01
+            gripper_action._close_command[:] = 0.01
 
             env.scene.write_data_to_sim()
 
