@@ -43,7 +43,7 @@ def update_gripper_action (env: ManagerBasedRLEnv):
 
     graspable = (rfinger_pos[:, 2] - handle_pos[:, 2]) * (lfinger_pos[:, 2] - handle_pos[:, 2]) < 0 # one finger above and the other beblow the handle 
 
-    is_valid = torch.logical_and(distance<=0.04 , graspable)
+    is_valid = torch.logical_and(distance<=0.02 , graspable)
 
     gripper_action = env.action_manager.get_term("gripper_action")
     
