@@ -35,7 +35,7 @@ def update_gripper_action (env: ManagerBasedRLEnv):
     handle_pos = env.scene["handle_frame"].data.target_pos_w[..., 0, :] # world coordinate of the handle 
 
     distance = torch.norm(ee_tcp_pos- handle_pos, dim = -1, p = 2)
-   #  print("distance :" , distance)
+    print("distance :" , distance)
 
     # for alignment calculation
     ee_fingertips_w = env.scene["ee_frame"].data.target_pos_w[..., 1:, :]
@@ -47,8 +47,10 @@ def update_gripper_action (env: ManagerBasedRLEnv):
     is_valid = torch.logical_and(distance<=0.04 , graspable)
 
     gripper_action = env.action_manager.get_term("gripper_action")
+    
+    print("is _valid? ", is_valid)
 
-   #  print("joint distance :", env.scene["robot"].data.joint_pos[:, gripper_action._joint_ids])
+    print("joint distance :", env.scene["robot"].data.joint_pos[:, gripper_action._joint_ids])
 
     for i in range(distance.shape[0]):
 
@@ -58,21 +60,24 @@ def update_gripper_action (env: ManagerBasedRLEnv):
 
         if is_valid[i] or env.gripper_locked[i]:
 
-            gripper_action._open_command[:] = 0.0
-            gripper_action._close_command[:] = 0.0
+            gripper_action._open_command[:] = 0.015
+            gripper_action._close_command[:] = 0.015
 
             env.scene.write_data_to_sim()
 
             env.gripper_locked[i] = True  
-        
-    
+
 def reset_gripper_locked(env: ManagerBasedRLEnv) : 
     """
     When episode is terminated, reset the gripper_locked attribute 
     """
+    gripper_action = env.action_manager.get_term("gripper_action")
 
     if hasattr(env, "gripper_locked"):
         env.gripper_locked[:] = False
+        gripper_action._open_command[:] = 0.04
+        gripper_action._close_command[:] = 0.04
+
         print("[INFO] IN reset_gripper_locked , gripper_locked attribute is reset to False.")
 
 # ==============================================================================================================================

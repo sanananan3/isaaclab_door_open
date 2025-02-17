@@ -30,7 +30,7 @@ SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
         ), # existing : enable_self_collisions=True
    
         collision_props = sim_utils.CollisionPropertiesCfg(
-            collision_enabled=True,
+            collision_enabled=False,
         )
          ),
     init_state=ArticulationCfg.InitialStateCfg(

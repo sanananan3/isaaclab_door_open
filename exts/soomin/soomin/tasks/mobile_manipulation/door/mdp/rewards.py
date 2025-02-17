@@ -25,19 +25,13 @@ def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor
     # Compute the distance of the end-effector to the handle
     distance = torch.norm(handle_pos - ee_tcp_pos, dim=-1, p=2)
     
-
-    # print("[info] in approach_ee_handle, handle_pos[0][1] : ", handle_pos[0][1])
-    
-
-    # signed_disance_y = torch.sign(handle_pos[0][1] - ee_tcp_pos[0][1]-0.009) 
-
-    direction_to_handle = handle_pos - ee_tcp_pos - 0.01
+    direction_to_handle = handle_pos - ee_tcp_pos - 0.009
 
     door_normal = torch.tensor([0.0, 1.0, 0.0], device=handle_pos.device) # manually change the door normal vector (current: y-axis)
 
     collision_check = torch.sum(direction_to_handle * door_normal, dim=-1)
 
-    is_valid = torch.logical_and(distance <= threshold, collision_check < 0) 
+    is_valid = torch.logical_and(distance <= threshold, collision_check < 0.0  ) 
 
     # Reward the robot for reaching the handle
     reward = 1.0 / (1.0 + distance**2)
@@ -67,7 +61,7 @@ def align_ee_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     align_x = torch.bmm(ee_tcp_x.unsqueeze(1), -handle_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
     align_y = torch.bmm(ee_tcp_y.unsqueeze(1), -handle_y.unsqueeze(-1)).squeeze(-1).squeeze(-1) 
 
-    return (torch.sign(align_z) * align_z**2 + torch.sign(align_x) * align_x**2) * 0.5 +  0.2 * torch.sign(align_y) * align_y**2
+    return (torch.sign(align_z) * align_z**2 + torch.sign(align_x) * align_x**2) * 0.5 +  0.15* torch.sign(align_y) * align_y**2
     
     
 
@@ -100,22 +94,32 @@ def align_grasp_around_handle(env: ManagerBasedRLEnv) -> torch.Tensor:
     (i.e., the one finger is above the handle and the other is below the handle).
     """
     # Target object position: (num_envs, 3)
-    handle_pos = env.scene["handle_frame"].data.target_pos_w[..., 0, :]
+    handle_pos = env.scene["handle_frame"].data.target_pos_w[..., 0, :] 
+    ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :] # world coordinate of the end-effector
+
+    distance = torch.norm(handle_pos - ee_tcp_pos, dim=-1, p=2)
+
     # Fingertips position: (num_envs, n_fingertips, 3)
     ee_fingertips_w = env.scene["ee_frame"].data.target_pos_w[..., 1:, :]
     lfinger_pos = ee_fingertips_w[..., 0, :]
     rfinger_pos = ee_fingertips_w[..., 1, :]
     
+
+
     # Check if hand is in a graspable pose
     is_graspable = (rfinger_pos[:, 2] - handle_pos[:, 2]) * (lfinger_pos[:, 2] - handle_pos[:, 2]) < 0
-    
-    return is_graspable
+    is_close = distance <= 0.1 # 0.05 is the threshold for the distance between the end-effector and the handle ... it might be larger. .. 
+
+    is_valid = is_graspable & is_close
+
+
+    return is_valid
 
 
 
 
 def grasp_handle(
-    env: ManagerBasedRLEnv, upper_threshold: float, open_joint_pos: float, asset_cfg: SceneEntityCfg
+    env: ManagerBasedRLEnv, upper_threshold: float, asset_cfg: SceneEntityCfg
 ) -> torch.Tensor:
     
     # asset_cfg = fr3_finger joint.*
@@ -132,13 +136,12 @@ def grasp_handle(
 
     ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
     handle_pos = env.scene["handle_frame"].data.target_pos_w[..., 0, :]
-    gripper_joint_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids]
     
     distance = torch.norm(handle_pos - ee_tcp_pos, dim=-1, p=2)
 
     is_valid = distance <= upper_threshold
 
-    return is_valid * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
+    return is_valid  # * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
 
 
 

@@ -206,21 +206,20 @@ class EventCfg:
 class RewardsCfg:
     # 1. Approach the handle
     approach_ee_handle = RewTerm(func=mdp.approach_ee_handle, weight=5.0, params={"threshold": 0.15}) # threshold : hyperparameter
-    align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=3.0) 
+    align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=4.0) 
     
     # 2. Grasp the handle
     approach_gripper_handle = RewTerm(func=mdp.approach_gripper_handle, weight=5.0)
-    align_grasp_around_handle = RewTerm(func=mdp.align_grasp_around_handle, weight=10.0)
+    align_grasp_around_handle = RewTerm(func=mdp.align_grasp_around_handle, weight=4.0)
     
-    # grasp_handle = RewTerm(
-    #     func=mdp.grasp_handle,
-    #     weight= 10.0, # previous - 3.0
-    #     params={
-    #         "upper_threshold": 0.035, # previous - 0.03
-    #         "open_joint_pos": 0.04,
-    #         "asset_cfg": SceneEntityCfg("robot", joint_names=["fr3_finger_joint.*"]),
-    #     },
-    # )
+    grasp_handle = RewTerm(
+        func=mdp.grasp_handle,
+        weight= 10.0, # previous - 3.0
+        params={
+            "upper_threshold": 0.025, # previous - 0.03
+            "asset_cfg": SceneEntityCfg("robot", joint_names=["fr3_finger_joint.*"]),
+        },
+    )
     
     # 3. Mobile action
     illegal_area = RewTerm(
