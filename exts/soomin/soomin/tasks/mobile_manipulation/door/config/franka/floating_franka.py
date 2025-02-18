@@ -80,9 +80,9 @@ SUMMIT_FRANKA_PANDA_CFG = ArticulationCfg(
         "fr3_hand": ImplicitActuatorCfg(
             joint_names_expr=["fr3_finger_joint.*"],
             effort_limit=1000.0, # 200
-            velocity_limit=10, # 0.1 
-            stiffness=100, # 2e3 
-            damping=50, # 1e10
+            velocity_limit=60, # 0.1 
+            stiffness=50, # 2e3 
+            damping=10, # 1e10
         ),
     },
     soft_joint_pos_limit_factor=1.0

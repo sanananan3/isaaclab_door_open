@@ -26,7 +26,7 @@ def sucess_grasp_handle(env: ManagerBasedRLEnv, threshold: float = 0.02) -> torc
     rfinger_dist = torch.abs(rfinger_pos[:, 2] - handle_pos[:, 2])
 
     # Check if hand is in a graspable pose
-    is_graspable = (rfinger_pos[:, 2] - handle_pos[:, 2]) * (lfinger_pos[:, 2] - handle_pos[:, 2]) < 0 # one finger above and the other beblow the handle 
+    is_graspable =(rfinger_pos[:, 2] < handle_pos[:,2]) & (lfinger_pos[:, 2] > handle_pos[:,2]) # one finger above and the other beblow the handle 
     
     # print("[INFO] IN terminations.py->sucess_grasp_handle, is_graspable : ", is_graspable) 
     # ===================================================================================

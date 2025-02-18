@@ -43,10 +43,10 @@ def update_gripper_action (env: ManagerBasedRLEnv):
 
     graspable = (rfinger_pos[:, 2] - handle_pos[:, 2]) * (lfinger_pos[:, 2] - handle_pos[:, 2]) < 0 # one finger above and the other beblow the handle 
 
-    is_valid = torch.logical_and(distance<=0.02 , graspable)
+    is_valid = torch.logical_and(distance<=0.04, graspable)
 
     gripper_action = env.action_manager.get_term("gripper_action")
-    
+
     for i in range(distance.shape[0]):
 
         if not hasattr(env, "gripper_locked"):
@@ -55,8 +55,8 @@ def update_gripper_action (env: ManagerBasedRLEnv):
 
         if is_valid[i] or env.gripper_locked[i]:
 
-            gripper_action._open_command[:] = 0.01
-            gripper_action._close_command[:] = 0.01
+            gripper_action._open_command[:] = 0.0
+            gripper_action._close_command[:] = 0.0
 
             env.scene.write_data_to_sim()
 
@@ -126,12 +126,16 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
         self.actions.arm_action= mdp.JointPositionActionCfg(
             asset_name="robot", joint_names=["fr3_joint.*"], scale=1.
         )
+
+
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot", 
             joint_names=["fr3_finger_joint.*"],
             open_command_expr=  {"fr3_finger_joint.*": 0.04},
             close_command_expr={"fr3_finger_joint.*": 0.04},
         )
+        
+        
         self.actions.mobile_action = mdp.FloatingHolonomicActionCfg(
             asset_name="robot", 
             body_name="robot_base_link",
