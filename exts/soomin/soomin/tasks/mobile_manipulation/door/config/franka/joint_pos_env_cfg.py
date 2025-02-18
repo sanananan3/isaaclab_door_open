@@ -86,7 +86,7 @@ class FrankaDoorEnvCfg(DoorEnvCfg):
         super().__post_init__()
         
         self.scene.robot = FLOATING_FRANKA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-
+        self.door_normal = torch.tensor([0.0, 1.0, 0.0])
         # ee = end-effector 
         self.scene.ee_frame = FrameTransformerCfg(
             prim_path="{ENV_REGEX_NS}/Robot/fr3_link0",

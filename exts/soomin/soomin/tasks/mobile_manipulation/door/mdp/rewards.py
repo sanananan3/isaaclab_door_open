@@ -25,22 +25,23 @@ def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor
     # Compute the distance of the end-effector to the handle
     distance = torch.norm(handle_pos - ee_tcp_pos, dim=-1, p=2)
     
-    signed_distance_y = torch.sign(handle_pos[0][1] - ee_tcp_pos[0][1]-0.009)
+    # signed_distance_y = torch.sign(handle_pos[0][1] - ee_tcp_pos[0][1]-0.009)
 
 
-    # generalize collision check 
+    """ generalize collision check  """
 
     # =========== manually change the door normal vector (current: y-axis) =================
 
     direction_to_handle = handle_pos - ee_tcp_pos - 0.009
 
-    door_normal = torch.tensor([0.0, 1.0, 0.0], device=handle_pos.device) 
+    door_normal = env.cfg.door_normal.to(device = handle_pos.device)
 
     collision_check = torch.sum(direction_to_handle * door_normal, dim=-1)
 
+
     # =====================================================================================
 
-    is_valid = torch.logical_and(distance <= threshold, signed_distance_y < 0 ) 
+    is_valid = torch.logical_and(distance <= threshold, collision_check < 0 ) 
 
     # Reward the robot for reaching the handle
     reward = 1.0 / (1.0 + distance**2)
